@@ -1,0 +1,6 @@
+#!/bin/sh 
+
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- multi_v7_defconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4
+
+
