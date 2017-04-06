@@ -331,6 +331,7 @@ EXPORT_SYMBOL_GPL(bus_for_each_dev);
  * if it does.  If the callback returns non-zero, this function will
  * return to the caller and not iterate over any more devices.
  */
+#include <linux/of.h>
 struct device *bus_find_device(struct bus_type *bus,
 			       struct device *start, void *data,
 			       int (*match)(struct device *dev, void *data))
@@ -343,10 +344,31 @@ struct device *bus_find_device(struct bus_type *bus,
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,
 			     (start ? &start->p->knode_bus : NULL));
-	while ((dev = next_device(&i)))
+	printk("%s 1:data=%x\n", __func__, data);
+	while ((dev = next_device(&i))){
+		if(dev && dev->of_node){
+			struct device_node *node = dev->of_node;
+
+			if(node){
+				char *name = node->name;
+				char *full_name = node->full_name;
+				char *type = node->type;
+				printk("%s 2:dev=%x, node=%x, name:%s, type:%s\n",
+						__func__, dev, node, name, full_name, type);
+				printk("%s 2:dev=%x, node=%x, full_name:%s\n",
+										__func__, dev, node, name, full_name, type);
+			}
+
+			else
+				printk("%s 2:dev=%x, node=%x, data=%x\n", __func__, dev, node, data);
+		}
+
+
 		if (match(dev, data) && get_device(dev))
 			break;
+	}
 	klist_iter_exit(&i);
+	printk("%s 3:dev=%x\n", __func__, dev);
 	return dev;
 }
 EXPORT_SYMBOL_GPL(bus_find_device);

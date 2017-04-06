@@ -944,24 +944,44 @@
 		status = "okay";
 	};
 
-	cameric: cameric@ff910000 {
-		compatible = "rockchip,rk3288-cameric";
-		rockchip,grf = <&grf>;
-		reg = <0xff910000 0x10000>, <0xff968000 0x4000>;
-		reg-names = "register", "csihost-register";
-		clocks = <&cru ACLK_ISP>, <&cru HCLK_ISP>,
-			<&cru SCLK_ISP>, <&cru SCLK_ISP_JPE>,
-			<&cru PCLK_MIPI_CSI>, <&cru PCLK_ISP_IN>,
-			<&cru SCLK_MIPIDSI_24M>;
-		clock-names = "aclk_isp", "hclk_isp",
-			"sclk_isp", "sclk_isp_jpe",
-			"pclk_mipi_csi", "pclk_isp_in",
-			"sclk_mipidsi_24m";
-		resets = <&cru SRST_ISP>;
-		reset-names = "rst_isp";
-		interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
-		interrupt-names = "cif_isp10_irq";
+	camera {
+		compatible = "rockchip,cameric";
 		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		#clock-cells = <1>;
+		clock-output-names = "cam_a_clkout", "cam_b_clkout";
+		ranges;
+		cameric_0: cameric@ff910000 {
+			compatible = "cameric,rk3288";
+			rockchip,grf = <&grf>;
+			reg = <0xff910000 0x10000>, <0xff968000 0x4000>;
+			reg-names = "register", "csihost-register";
+			clocks = <&cru ACLK_ISP>, <&cru HCLK_ISP>,
+				<&cru SCLK_ISP>, <&cru SCLK_ISP_JPE>,
+				<&cru PCLK_MIPI_CSI>, <&cru PCLK_ISP_IN>,
+				<&cru SCLK_MIPIDSI_24M>;
+			clock-names = "aclk_isp", "hclk_isp",
+				"sclk_isp", "sclk_isp_jpe",
+				"pclk_mipi_csi", "pclk_isp_in",
+				"sclk_mipidsi_24m";
+			resets = <&cru SRST_ISP>;
+			reset-names = "rst_isp";
+			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "cif_isp10_irq";
+			status = "okay";
+		};
+		csis_0: csis@11880000 {
+			compatible = "rockchip,cameric-csis";
+			reg = <0x11880000 0x4000>;
+			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
+			clock-names = "csis", "sclk_csis";
+			bus-width = <4>;
+			phy-names = "csis";
+			status = "disabled";
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
 	};
 
 	vopb: vop@ff930000 {
