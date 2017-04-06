@@ -665,15 +665,15 @@ static int cameric_md_register_platform_entities(struct cameric_md *cmd,
 {
 	struct device_node *node;
 	int ret = 0;
-	printk(KERN_INFO "%s \n", __func__);
+	printk(KERN_INFO "%s 1\n", __func__);
 	for_each_available_child_of_node(parent, node) {
 		struct platform_device *pdev;
 		int plat_entity = -1;
-
+		printk(KERN_INFO "%s 21: %s\n", __func__, node->name);
 		pdev = of_find_device_by_node(node);
 		if (!pdev)
 			continue;
-
+		printk(KERN_INFO "%s 22: %s\n", __func__, node->name);
 		/* If driver of any entity isn't ready try all again later. */
 		if (!strcmp(node->name, CSIS_OF_NODE_NAME))
 			plat_entity = IDX_CSIS;
@@ -684,17 +684,19 @@ static int cameric_md_register_platform_entities(struct cameric_md *cmd,
 		else if	(!strcmp(node->name, CAMERIC_OF_NODE_NAME) &&
 			 !of_property_read_bool(node, "samsung,lcd-wb"))
 			plat_entity = IDX_CAMERIC;
-
+		printk(KERN_INFO "%s 23\n", __func__);
 		if (plat_entity >= 0)
 			ret = cameric_md_register_platform_entity(cmd, pdev,
 							plat_entity);
+		printk(KERN_INFO "%s 24\n", __func__);
 		put_device(&pdev->dev);
 		if (ret < 0) {
 			of_node_put(node);
 			break;
 		}
+		printk(KERN_INFO "%s 25\n", __func__);
 	}
-
+	printk(KERN_INFO "%s 3\n", __func__);
 	return ret;
 }
 
@@ -1163,30 +1165,29 @@ static int cameric_md_get_pinctrl(struct cameric_md *cmd)
 {
 	struct device *dev = &cmd->pdev->dev;
 	struct cameric_pinctrl *pctl = &cmd->pinctl;
-	printk(KERN_INFO "%s \n", __func__);
+
+	printk(KERN_INFO "%s 1\n", __func__);
 	pctl->pinctrl = devm_pinctrl_get(dev);
 	if (IS_ERR(pctl->pinctrl))
 		return PTR_ERR(pctl->pinctrl);
-
+	printk(KERN_INFO "%s 2\n", __func__);
 	pctl->state_default = pinctrl_lookup_state(pctl->pinctrl,
 					PINCTRL_STATE_DEFAULT);
 	if (IS_ERR(pctl->state_default))
 		return PTR_ERR(pctl->state_default);
-
+	else
+		pinctrl_select_state(pctl->pinctrl, pctl->state_default);
+	printk(KERN_INFO "%s 3\n", __func__);
 	pctl->state_idle = pinctrl_lookup_state(pctl->pinctrl,
 					PINCTRL_STATE_IDLE);
 	if (IS_ERR(pctl->state_idle))
 		return PTR_ERR(pctl->state_idle);
-
+	printk(KERN_INFO "%s 4\n", __func__);
 	pctl->pins_sleep = pinctrl_lookup_state(pctl->pinctrl,
 					PINCTRL_STATE_SLEEP);
 	if (IS_ERR(pctl->pins_sleep))
 		return PTR_ERR(pctl->pins_sleep);
-
-	if (!IS_ERR_OR_NULL(pctl->state_default))
-		pinctrl_select_state(pctl->pinctrl, pctl->state_default);
-
-
+	printk(KERN_INFO "%s 5\n", __func__);
 	return 0;
 }
 
@@ -1371,16 +1372,16 @@ static int cameric_md_probe(struct platform_device *pdev)
 		return ret;
 	}
 	printk(KERN_INFO "%s 8\n", __func__);
-	ret = cameric_md_get_clocks(cmd);
-	if (ret)
-		goto err_md;
-	printk(KERN_INFO "%s 9\n", __func__);
-	ret = cameric_md_get_pinctrl(cmd);
-	if (ret < 0) {
-		if (ret != EPROBE_DEFER)
-			dev_err(dev, "Failed to get pinctrl: %d\n", ret);
-		goto err_clk;
-	}
+	//ret = cameric_md_get_clocks(cmd);
+	//if (ret)
+	//	goto err_md;
+	//printk(KERN_INFO "%s 9\n", __func__);
+	cameric_md_get_pinctrl(cmd);
+	//if (ret < 0) {
+		//if (ret != EPROBE_DEFER)
+			//dev_err(dev, "Failed to get pinctrl: %d\n", ret);
+		//goto err_clk;
+	//}
 	printk(KERN_INFO "%s 10\n", __func__);
 	platform_set_drvdata(pdev, cmd);
 	printk(KERN_INFO "%s 11\n", __func__);
@@ -1480,20 +1481,26 @@ static struct platform_driver cameric_md_driver = {
 static int __init cameric_md_init(void)
 {
 	int ret;
-	printk(KERN_INFO "%s\n", __func__);
+	printk(KERN_INFO "%s 1\n", __func__);
 	request_module("cameric-csis");
+	printk(KERN_INFO "%s 2\n", __func__);
 	ret = cameric_register_driver();
+	printk(KERN_INFO "%s 3\n", __func__);
 	if (ret)
 		return ret;
-
-	return platform_driver_register(&cameric_md_driver);
+	printk(KERN_INFO "%s 4\n", __func__);
+	ret = platform_driver_register(&cameric_md_driver);
+	printk(KERN_INFO "%s 5 ret = %d\n", __func__, ret);
+	return ret;
 }
 
 static void __exit cameric_md_exit(void)
 {
-	printk(KERN_INFO "%s\n", __func__);
+	printk(KERN_INFO "%s 1\n", __func__);
 	platform_driver_unregister(&cameric_md_driver);
+	printk(KERN_INFO "%s 2\n", __func__);
 	cameric_unregister_driver();
+	printk(KERN_INFO "%s 3\n", __func__);
 }
 
 module_init(cameric_md_init);

@@ -343,10 +343,15 @@ struct device *bus_find_device(struct bus_type *bus,
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,
 			     (start ? &start->p->knode_bus : NULL));
-	while ((dev = next_device(&i)))
+	printk("%s 1\n", __func__);
+	while ((dev = next_device(&i))){
+		if(dev && dev->of_node)
+			printk("%s 2:dev=%x, dev->of_node=%x, name:%s, data=%x\n", __func__, dev, dev->of_node, dev->of_node->name, data);
 		if (match(dev, data) && get_device(dev))
 			break;
+	}
 	klist_iter_exit(&i);
+	printk("%s 3:dev=%x\n", __func__, dev);
 	return dev;
 }
 EXPORT_SYMBOL_GPL(bus_find_device);

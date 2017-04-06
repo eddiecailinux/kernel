@@ -802,89 +802,6 @@ struct cameric_fmt *cameric_find_format(const u32 *pixelformat, const u32 *mbus_
 	return def_fmt;
 }
 
-static void cameric_clk_put(struct cameric_dev *cameric)
-{
-	int i;
-	printk(KERN_INFO "%s\n", __func__);
-	for (i = 0; i < MAX_CAMERIC_CLOCKS; i++) {
-		if (IS_ERR(cameric->clock[i]))
-			continue;
-		clk_unprepare(cameric->clock[i]);
-		clk_put(cameric->clock[i]);
-		cameric->clock[i] = ERR_PTR(-EINVAL);
-	}
-}
-
-static int cameric_clk_get(struct cameric_dev *cameric)
-{
-	int i, ret;
-	printk(KERN_INFO "%s\n", __func__);
-	for (i = 0; i < MAX_CAMERIC_CLOCKS; i++)
-		cameric->clock[i] = ERR_PTR(-EINVAL);
-
-	for (i = 0; i < MAX_CAMERIC_CLOCKS; i++) {
-		cameric->clock[i] = clk_get(&cameric->pdev->dev, cameric_clocks[i]);
-		if (IS_ERR(cameric->clock[i])) {
-			ret = PTR_ERR(cameric->clock[i]);
-			goto err;
-		}
-		ret = clk_prepare(cameric->clock[i]);
-		if (ret < 0) {
-			clk_put(cameric->clock[i]);
-			cameric->clock[i] = ERR_PTR(-EINVAL);
-			goto err;
-		}
-	}
-	return 0;
-err:
-	cameric_clk_put(cameric);
-	dev_err(&cameric->pdev->dev, "failed to get clock: %s\n",
-		cameric_clocks[i]);
-	return -ENXIO;
-}
-
-#ifdef CONFIG_PM
-static int cameric_m2m_suspend(struct cameric_dev *cameric)
-{
-	unsigned long flags;
-	int timeout;
-	printk(KERN_INFO "%s\n", __func__);
-	spin_lock_irqsave(&cameric->slock, flags);
-	if (!cameric_m2m_pending(cameric)) {
-		spin_unlock_irqrestore(&cameric->slock, flags);
-		return 0;
-	}
-	clear_bit(ST_M2M_SUSPENDED, &cameric->state);
-	set_bit(ST_M2M_SUSPENDING, &cameric->state);
-	spin_unlock_irqrestore(&cameric->slock, flags);
-
-	timeout = wait_event_timeout(cameric->irq_queue,
-			     test_bit(ST_M2M_SUSPENDED, &cameric->state),
-				 CAMERIC_SHUTDOWN_TIMEOUT);
-
-	clear_bit(ST_M2M_SUSPENDING, &cameric->state);
-	return timeout == 0 ? -EAGAIN : 0;
-}
-
-static int cameric_m2m_resume(struct cameric_dev *cameric)
-{
-	struct cameric_ctx *ctx;
-	unsigned long flags;
-	printk(KERN_INFO "%s\n", __func__);
-	spin_lock_irqsave(&cameric->slock, flags);
-	/* Clear for full H/W setup in first run after resume */
-	ctx = cameric->m2m.ctx;
-	cameric->m2m.ctx = NULL;
-	spin_unlock_irqrestore(&cameric->slock, flags);
-
-	if (test_and_clear_bit(ST_M2M_SUSPENDED, &cameric->state))
-		cameric_m2m_job_finish(ctx, VB2_BUF_STATE_ERROR);
-
-	return 0;
-}
-#endif /* CONFIG_PM */
-
-
 
 
 struct cameric_clk_rk3288 {
@@ -900,7 +817,7 @@ struct cameric_clk_rk3288 {
 
 static int rk3288_clk_enable(struct cameric_clk_rk3288 *clk_rst)
 {
-
+	printk(KERN_INFO "%s\n", __func__);
 	clk_prepare_enable(clk_rst->hclk_isp);
 	clk_prepare_enable(clk_rst->aclk_isp);
 	clk_prepare_enable(clk_rst->sclk_isp);
@@ -913,6 +830,7 @@ static int rk3288_clk_enable(struct cameric_clk_rk3288 *clk_rst)
 
 static int rk3288_clk_disable(struct cameric_clk_rk3288 *clk_rst)
 {
+	printk(KERN_INFO "%s\n", __func__);
 	clk_disable_unprepare(clk_rst->hclk_isp);
 	clk_disable_unprepare(clk_rst->aclk_isp);
 	clk_disable_unprepare(clk_rst->sclk_isp);
@@ -927,6 +845,7 @@ static struct cameric_clk_rk3288 *cameric_clk_get_rk3288(struct device *dev)
 {
 	struct cameric_clk_rk3288 *clk_rst;
 
+	printk(KERN_INFO "%s\n", __func__);
 	clk_rst = (struct cameric_clk_rk3288 *)devm_kzalloc(dev,
 			sizeof(struct cameric_clk_rk3288), GFP_KERNEL);
 	if (!clk_rst) {
@@ -979,125 +898,106 @@ static struct cameric_clk_rk3288 *cameric_clk_get_rk3288(struct device *dev)
 	return clk_rst;
 }
 
-
-static const struct of_device_id cameric_of_match[];
-struct cameric_soc {
-
-	void *clk;
-	struct cif_isp10_device *cif_isp10;
-};
-static int cameric_parse_dt(struct cameric_dev *cameric, u32 *clk_freq)
+static int cameric_clk_put_rk3288(struct device *dev,
+									struct cameric_clk_rk3288 *clk_rst)
 {
-	struct device *dev = &cameric->pdev->dev;
-	struct platform_device *pdev = cameric->pdev;
-	struct device_node *np = dev->of_node, *node;
-
-	const struct of_device_id *of_id;
-	struct cameric_variant *v;
-	struct cameric_pix_limit *lim;
-	struct cameric_soc *soc;
-	struct cameric_clk_rk3288 *clk_rk3288;
-	struct regmap *regmap_grf;
-	void __iomem *csihost_base;
-	void __iomem *isp_base;
-	void __iomem *base_addr;
-	struct resource *res;
-	//u32 args[CAMERIC_PIX_LIMITS_MAX];
-	int irq, ret;
-
-	v = devm_kzalloc(dev, sizeof(struct cameric_soc), GFP_KERNEL);
-	if (!v)
-		return -ENOMEM;
-
-
-	printk(KERN_INFO "%s 1\n", __func__);
-	node = of_parse_phandle(np, "rockchip,grf", 0);
-	if(!node)
-		return -ENODEV;
-	printk(KERN_INFO "%s 2\n", __func__);
-	cameric->regmap_grf = syscon_node_to_regmap(node);
-	if (IS_ERR(regmap_grf))
-		return PTR_ERR(regmap_grf);
-	printk(KERN_INFO "%s 3\n", __func__);
-	res = platform_get_resource_byname(pdev,
-				IORESOURCE_MEM, "csihost-register");
-	if (!res)
-		return -EINVAL;
-	printk(KERN_INFO "%s 4\n", __func__);
-	cameric->csihost_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(csihost_base))
-		return PTR_ERR(csihost_base);
-	printk(KERN_INFO "%s 5\n", __func__);
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "register");
-	if (!res)
-		return -EINVAL;
-	printk(KERN_INFO "%s 6\n", __func__);
-	cameric->base_addr = devm_ioremap_resource(dev, res);
-	if (IS_ERR_OR_NULL(base_addr))
-		return PTR_ERR(base_addr);
-	printk(KERN_INFO "%s 7\n", __func__);
-	cameric->irq = platform_get_irq_byname(pdev, "cif_isp10_irq");
-	if (IS_ERR_VALUE(irq)) {
-		dev_err(&pdev->dev, "unable to get IRQ(error %d)\n", ret);
-
-	}
-	printk(KERN_INFO "%s 8\n", __func__);
-
-
-#if 0
-	if (of_property_read_bool(node, "samsung,lcd-wb"))
-		return -ENODEV;
-	printk(KERN_INFO "%s 2\n", __func__);
-	v = devm_kzalloc(dev, sizeof(*v) + sizeof(*lim), GFP_KERNEL);
-	if (!v)
-		return -ENOMEM;
-	printk(KERN_INFO "%s 3\n", __func__);
-	of_id = of_match_node(cameric_of_match, node);
-	if (!of_id)
-		return -EINVAL;
-	printk(KERN_INFO "%s 4\n", __func__);
-	cameric->drv_data = of_id->data;
-	ret = of_property_read_u32_array(node, "samsung,pix-limits",
-					 args, CAMERIC_PIX_LIMITS_MAX);
-	if (ret < 0)
-		return ret;
-
-	lim = (struct cameric_pix_limit *)&v[1];
-
-	lim->scaler_en_w = args[0];
-	lim->scaler_dis_w = args[1];
-	lim->out_rot_en_w = args[2];
-	lim->out_rot_dis_w = args[3];
-	v->pix_limit = lim;
-
-	ret = of_property_read_u32_array(node, "samsung,min-pix-sizes",
-								args, 2);
-	v->min_inp_pixsize = ret ? CAMERIC_DEF_MIN_SIZE : args[0];
-	v->min_out_pixsize = ret ? CAMERIC_DEF_MIN_SIZE : args[1];
-	ret = of_property_read_u32_array(node, "samsung,min-pix-alignment",
-								args, 2);
-	v->min_vsize_align = ret ? CAMERIC_DEF_HEIGHT_ALIGN : args[0];
-	v->hor_offs_align = ret ? CAMERIC_DEF_HOR_OFFS_ALIGN : args[1];
-
-	ret = of_property_read_u32(node, "samsung,rotators", &args[1]);
-	v->has_inp_rot = ret ? 1 : args[1] & 0x01;
-	v->has_out_rot = ret ? 1 : args[1] & 0x10;
-	v->has_mainscaler_ext = of_property_read_bool(node,
-					"samsung,mainscaler-ext");
-
-	v->has_isp_wb = of_property_read_bool(node, "samsung,isp-wb");
-	v->has_cam_if = of_property_read_bool(node, "samsung,cam-if");
-	of_property_read_u32(node, "clock-frequency", clk_freq);
-	cameric->id = of_alias_get_id(node, "cameric");
-
-	cameric->variant = v;
-#endif
+	printk(KERN_INFO "%s\n", __func__);
+	if (!IS_ERR_OR_NULL(clk_rst->aclk_isp))
+		devm_clk_put(dev, clk_rst->aclk_isp);
+	if (!IS_ERR_OR_NULL(clk_rst->hclk_isp))
+		devm_clk_put(dev, clk_rst->hclk_isp);
+	if (!IS_ERR_OR_NULL(clk_rst->sclk_isp))
+		devm_clk_put(dev, clk_rst->sclk_isp);
+	if (!IS_ERR_OR_NULL(clk_rst->sclk_isp_jpe))
+		devm_clk_put(dev, clk_rst->sclk_isp_jpe);
+	if (!IS_ERR_OR_NULL(clk_rst->pclk_mipi_csi))
+		devm_clk_put(dev, clk_rst->pclk_mipi_csi);
+	if (!IS_ERR_OR_NULL(clk_rst->pclk_isp_in))
+		devm_clk_put(dev, clk_rst->pclk_isp_in);
+	if (!IS_ERR_OR_NULL(clk_rst->sclk_mipidsi_24m))
+		devm_clk_put(dev, clk_rst->sclk_mipidsi_24m);
+	if (!IS_ERR_OR_NULL(clk_rst->isp_rst))
+		reset_control_put(clk_rst->isp_rst);
 	return 0;
 }
+
+static void cameric_clk_put(struct cameric_dev *cameric)
+{
+	struct platform_device *pdev = cameric->pdev;
+	struct device *dev = &pdev->dev;
+
+	printk(KERN_INFO "%s\n", __func__);
+	cameric_clk_put_rk3288(dev, cameric->clk_rst);
+	rk3288_clk_disable(cameric->clk_rst);
+}
+
+static int cameric_clk_get(struct cameric_dev *cameric)
+{
+	struct platform_device *pdev = cameric->pdev;
+	struct device *dev = &pdev->dev;
+	printk(KERN_INFO "%s\n", __func__);
+
+	cameric->clk_rst = cameric_clk_get_rk3288(dev);
+	if(IS_ERR_OR_NULL(cameric->clk_rst)){
+		cameric_clk_put(cameric);
+		return -ENXIO;
+	}
+
+	rk3288_clk_enable(cameric->clk_rst);
+	return 0;
+}
+
+#ifdef CONFIG_PM
+static int cameric_m2m_suspend(struct cameric_dev *cameric)
+{
+	unsigned long flags;
+	int timeout;
+	printk(KERN_INFO "%s\n", __func__);
+	spin_lock_irqsave(&cameric->slock, flags);
+	if (!cameric_m2m_pending(cameric)) {
+		spin_unlock_irqrestore(&cameric->slock, flags);
+		return 0;
+	}
+	clear_bit(ST_M2M_SUSPENDED, &cameric->state);
+	set_bit(ST_M2M_SUSPENDING, &cameric->state);
+	spin_unlock_irqrestore(&cameric->slock, flags);
+
+	timeout = wait_event_timeout(cameric->irq_queue,
+			     test_bit(ST_M2M_SUSPENDED, &cameric->state),
+				 CAMERIC_SHUTDOWN_TIMEOUT);
+
+	clear_bit(ST_M2M_SUSPENDING, &cameric->state);
+	return timeout == 0 ? -EAGAIN : 0;
+}
+
+static int cameric_m2m_resume(struct cameric_dev *cameric)
+{
+	struct cameric_ctx *ctx;
+	unsigned long flags;
+	printk(KERN_INFO "%s\n", __func__);
+	spin_lock_irqsave(&cameric->slock, flags);
+	/* Clear for full H/W setup in first run after resume */
+	ctx = cameric->m2m.ctx;
+	cameric->m2m.ctx = NULL;
+	spin_unlock_irqrestore(&cameric->slock, flags);
+
+	if (test_and_clear_bit(ST_M2M_SUSPENDED, &cameric->state))
+		cameric_m2m_job_finish(ctx, VB2_BUF_STATE_ERROR);
+
+	return 0;
+}
+#endif /* CONFIG_PM */
+
+
+
+
+
+static const struct of_device_id cameric_of_match[];
 
 static int cameric_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node, *node;
 	u32 lclk_freq = 0;
 	struct cameric_dev *cameric;
 	struct resource *res;
@@ -1109,61 +1009,85 @@ static int cameric_probe(struct platform_device *pdev)
 
 	cameric->pdev = pdev;
 	printk(KERN_INFO "%s 2\n", __func__);
-	if (dev->of_node) {
-		ret = cameric_parse_dt(cameric, &lclk_freq);
-		if (ret < 0)
-			return ret;
-	} else {
-		cameric->drv_data = cameric_get_drvdata(pdev);
-		cameric->id = pdev->id;
-	}
-	printk(KERN_INFO "%s 3\n", __func__);
-	if (!cameric->drv_data || cameric->id >= cameric->drv_data->num_entities ||
-	    cameric->id < 0) {
-		dev_err(dev, "Invalid driver data or device id (%d)\n",
-			cameric->id);
-		return -EINVAL;
-	}
-	printk(KERN_INFO "%s 4\n", __func__);
+
 	if (!dev->of_node)
 		cameric->variant = cameric->drv_data->variant[cameric->id];
-	printk(KERN_INFO "%s\n", __func__);
+	printk(KERN_INFO "%s 3\n", __func__);
+
+
+
+
 	init_waitqueue_head(&cameric->irq_queue);
 	spin_lock_init(&cameric->slock);
 	mutex_init(&cameric->lock);
+
+
+
+	printk(KERN_INFO "%s 4\n", __func__);
+	node = of_parse_phandle(np, "rockchip,grf", 0);
+	if(!node)
+		return -ENODEV;
 	printk(KERN_INFO "%s 5\n", __func__);
-	cameric->sysreg = cameric_get_sysreg_regmap(dev->of_node);
-	if (IS_ERR(cameric->sysreg))
-		return PTR_ERR(cameric->sysreg);
+	cameric->regmap_grf = syscon_node_to_regmap(node);
+	if (IS_ERR_OR_NULL(cameric->regmap_grf))
+		return PTR_ERR(cameric->regmap_grf);
+
+
 	printk(KERN_INFO "%s 6\n", __func__);
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	cameric->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(cameric->regs))
-		return PTR_ERR(cameric->regs);
+	res = platform_get_resource_byname(pdev,
+				IORESOURCE_MEM, "csihost-register");
+	if (!res)
+		return -EINVAL;
 	printk(KERN_INFO "%s 7\n", __func__);
+	cameric->csihost_base = devm_ioremap_resource(dev, res);
+	if (IS_ERR_OR_NULL(cameric->csihost_base))
+		return PTR_ERR(cameric->csihost_base);
+
+
+	printk(KERN_INFO "%s 8\n", __func__);
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "register");
+	if (!res)
+		return -EINVAL;
+	printk(KERN_INFO "%s 9\n", __func__);
+	cameric->base_addr = devm_ioremap_resource(dev, res);
+	if (IS_ERR_OR_NULL(cameric->base_addr))
+		return PTR_ERR(cameric->base_addr);
+	printk(KERN_INFO "%s 10\n", __func__);
+
+
+
+	ret = cameric_clk_get(cameric);
+	if (ret)
+		return ret;
+	printk(KERN_INFO "%s 11\n", __func__);
+
+
+
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (res == NULL) {
 		dev_err(dev, "Failed to get IRQ resource\n");
 		return -ENXIO;
 	}
-	printk(KERN_INFO "%s 8\n", __func__);
-	ret = cameric_clk_get(cameric);
-	if (ret)
-		return ret;
-	printk(KERN_INFO "%s 9\n", __func__);
-	if (lclk_freq == 0)
-		lclk_freq = cameric->drv_data->lclk_frequency;
-	printk(KERN_INFO "%s 10\n", __func__);
-	ret = clk_set_rate(cameric->clock[CLK_BUS], lclk_freq);
-	if (ret < 0)
-		return ret;
-	printk(KERN_INFO "%s 11\n", __func__);
-	ret = clk_enable(cameric->clock[CLK_BUS]);
-	if (ret < 0)
-		return ret;
 	printk(KERN_INFO "%s 12\n", __func__);
-	ret = devm_request_irq(dev, res->start, cameric_irq_handler,
-			       0, dev_name(dev), cameric);
+	cameric->irq = platform_get_irq_byname(pdev, "cif_isp10_irq");
+	if (IS_ERR_VALUE(cameric->irq)) {
+		dev_err(&pdev->dev, "unable to get IRQ(error %d)\n", ret);
+
+	}
+
+	printk(KERN_INFO "%s 121\n", __func__);
+	ret = devm_request_threaded_irq(dev,
+			cameric->irq,
+			cameric_irq_handler,
+			NULL,
+			0,
+			dev_name(dev),
+			cameric);
+
+
+
+	//ret = devm_request_irq(dev, res->start, cameric_irq_handler,
+		//	       0, dev_name(dev), cameric);
 	if (ret < 0) {
 		dev_err(dev, "failed to install irq (%d)\n", ret);
 		goto err_sclk;
@@ -1365,10 +1289,10 @@ static const struct cameric_drvdata cameric_drvdata_rk3288 = {
 
 static const struct of_device_id cameric_of_match[] = {
 	{
-		.compatible = "rockchip,rk3288-cameric",
+		.compatible = "cameric,rk3288",
 		.data = &cameric_drvdata_rk3288,
 	},	{
-		.compatible = "rockchip,rk3399-cameric",
+		.compatible = "cameric,rk3399",
 		.data = &cameric_drvdata_rk3399,
 	},
 	{ /* sentinel */ },

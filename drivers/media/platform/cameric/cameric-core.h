@@ -424,16 +424,19 @@ struct cameric_dev {
 	struct platform_device		*pdev;
 	struct s5p_platform_cameric	*pdata;
 	struct regmap			*sysreg;
+	struct regmap *regmap_grf;
 	const struct cameric_variant	*variant;
 	const struct cameric_drvdata	*drv_data;
 	int				id;
 	int irq;
 	struct clk			*clock[MAX_CAMERIC_CLOCKS];
 	void __iomem			*regs;
+	void __iomem *base_addr;
+
 	void __iomem *csihost_base;
 	void __iomem *isp_base;
-	void __iomem *base_addr;
-	struct regmap *regmap_grf;
+
+	struct cameric_clk_rk3288 *clk_rst;
 	wait_queue_head_t		irq_queue;
 	struct v4l2_device		*v4l2_dev;
 	struct cameric_m2m_device		m2m;
@@ -651,6 +654,7 @@ void cameric_unregister_driver(void);
 #ifdef CONFIG_MFD_SYSCON
 static inline struct regmap * cameric_get_sysreg_regmap(struct device_node *node)
 {
+	printk(KERN_INFO "%s \n", __func__);
 	return syscon_regmap_lookup_by_phandle(node, "samsung,sysreg");
 }
 #else
