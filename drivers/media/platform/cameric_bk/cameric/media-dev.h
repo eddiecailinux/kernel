@@ -25,7 +25,8 @@
 #include "mipi-csis.h"
 
 #define CAMERIC_OF_NODE_NAME	"cameric"
-#define CAMERIC_IS_OF_NODE_NAME	"cameric-isp"
+#define CAMERIC_LITE_OF_NODE_NAME	"cameric-lite"
+#define CAMERIC_IS_OF_NODE_NAME	"cameric-is"
 #define CSIS_OF_NODE_NAME	"csis"
 
 #define PINCTRL_STATE_IDLE	"idle"
@@ -44,6 +45,7 @@ enum {
 enum cameric_subdev_index {
 	IDX_SENSOR,
 	IDX_CSIS,
+	//IDX_FLITE,
 	IDX_IS_ISP,
 	IDX_CAMERIC,
 	IDX_MAX,

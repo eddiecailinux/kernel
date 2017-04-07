@@ -154,15 +154,16 @@ EXPORT_SYMBOL_GPL(v4l2_device_unregister);
 int v4l2_device_register_subdev(struct v4l2_device *v4l2_dev,
 				struct v4l2_subdev *sd)
 {
+	printk(KERN_INFO "%s 1\n", __func__);
 #if defined(CONFIG_MEDIA_CONTROLLER)
 	struct media_entity *entity = &sd->entity;
 #endif
 	int err;
-
+	printk(KERN_INFO "%s 2\n", __func__);
 	/* Check for valid input */
 	if (!v4l2_dev || !sd || sd->v4l2_dev || !sd->name[0])
 		return -EINVAL;
-
+	printk(KERN_INFO "%s 3\n", __func__);
 	/*
 	 * The reason to acquire the module here is to avoid unloading
 	 * a module of sub-device which is registered to a media
@@ -172,16 +173,16 @@ int v4l2_device_register_subdev(struct v4l2_device *v4l2_dev,
 	 */
 	sd->owner_v4l2_dev = v4l2_dev->dev && v4l2_dev->dev->driver &&
 		sd->owner == v4l2_dev->dev->driver->owner;
-
+	printk(KERN_INFO "%s 4\n", __func__);
 	if (!sd->owner_v4l2_dev && !try_module_get(sd->owner))
 		return -ENODEV;
-
+	printk(KERN_INFO "%s 5\n", __func__);
 	sd->v4l2_dev = v4l2_dev;
 	/* This just returns 0 if either of the two args is NULL */
 	err = v4l2_ctrl_add_handler(v4l2_dev->ctrl_handler, sd->ctrl_handler, NULL);
 	if (err)
 		goto error_module;
-
+	printk(KERN_INFO "%s 6\n", __func__);
 #if defined(CONFIG_MEDIA_CONTROLLER)
 	/* Register the entity. */
 	if (v4l2_dev->mdev) {
@@ -190,26 +191,28 @@ int v4l2_device_register_subdev(struct v4l2_device *v4l2_dev,
 			goto error_module;
 	}
 #endif
-
+	printk(KERN_INFO "%s 7\n", __func__);
 	if (sd->internal_ops && sd->internal_ops->registered) {
 		err = sd->internal_ops->registered(sd);
 		if (err)
 			goto error_unregister;
 	}
-
+	printk(KERN_INFO "%s 8\n", __func__);
 	spin_lock(&v4l2_dev->lock);
 	list_add_tail(&sd->list, &v4l2_dev->subdevs);
 	spin_unlock(&v4l2_dev->lock);
-
+	printk(KERN_INFO "%s 9\n", __func__);
 	return 0;
 
 error_unregister:
 #if defined(CONFIG_MEDIA_CONTROLLER)
 	media_device_unregister_entity(entity);
 #endif
+	printk(KERN_INFO "%s 10\n", __func__);
 error_module:
 	if (!sd->owner_v4l2_dev)
 		module_put(sd->owner);
+	printk(KERN_INFO "%s 11\n", __func__);
 	sd->v4l2_dev = NULL;
 	return err;
 }

@@ -802,48 +802,6 @@ struct cameric_fmt *cameric_find_format(const u32 *pixelformat, const u32 *mbus_
 	return def_fmt;
 }
 
-#ifdef CONFIG_PM
-static int cameric_m2m_suspend(struct cameric_dev *cameric)
-{
-	unsigned long flags;
-	int timeout;
-	printk(KERN_INFO "%s\n", __func__);
-	spin_lock_irqsave(&cameric->slock, flags);
-	if (!cameric_m2m_pending(cameric)) {
-		spin_unlock_irqrestore(&cameric->slock, flags);
-		return 0;
-	}
-	clear_bit(ST_M2M_SUSPENDED, &cameric->state);
-	set_bit(ST_M2M_SUSPENDING, &cameric->state);
-	spin_unlock_irqrestore(&cameric->slock, flags);
-
-	timeout = wait_event_timeout(cameric->irq_queue,
-			     test_bit(ST_M2M_SUSPENDED, &cameric->state),
-				 CAMERIC_SHUTDOWN_TIMEOUT);
-
-	clear_bit(ST_M2M_SUSPENDING, &cameric->state);
-	return timeout == 0 ? -EAGAIN : 0;
-}
-
-static int cameric_m2m_resume(struct cameric_dev *cameric)
-{
-	struct cameric_ctx *ctx;
-	unsigned long flags;
-	printk(KERN_INFO "%s\n", __func__);
-	spin_lock_irqsave(&cameric->slock, flags);
-	/* Clear for full H/W setup in first run after resume */
-	ctx = cameric->m2m.ctx;
-	cameric->m2m.ctx = NULL;
-	spin_unlock_irqrestore(&cameric->slock, flags);
-
-	if (test_and_clear_bit(ST_M2M_SUSPENDED, &cameric->state))
-		cameric_m2m_job_finish(ctx, VB2_BUF_STATE_ERROR);
-
-	return 0;
-}
-#endif /* CONFIG_PM */
-
-
 
 
 struct cameric_clk_rk3288 {
@@ -989,6 +947,48 @@ static int cameric_clk_get(struct cameric_dev *cameric)
 	return 0;
 }
 
+#ifdef CONFIG_PM
+static int cameric_m2m_suspend(struct cameric_dev *cameric)
+{
+	unsigned long flags;
+	int timeout;
+	printk(KERN_INFO "%s\n", __func__);
+	spin_lock_irqsave(&cameric->slock, flags);
+	if (!cameric_m2m_pending(cameric)) {
+		spin_unlock_irqrestore(&cameric->slock, flags);
+		return 0;
+	}
+	clear_bit(ST_M2M_SUSPENDED, &cameric->state);
+	set_bit(ST_M2M_SUSPENDING, &cameric->state);
+	spin_unlock_irqrestore(&cameric->slock, flags);
+
+	timeout = wait_event_timeout(cameric->irq_queue,
+			     test_bit(ST_M2M_SUSPENDED, &cameric->state),
+				 CAMERIC_SHUTDOWN_TIMEOUT);
+
+	clear_bit(ST_M2M_SUSPENDING, &cameric->state);
+	return timeout == 0 ? -EAGAIN : 0;
+}
+
+static int cameric_m2m_resume(struct cameric_dev *cameric)
+{
+	struct cameric_ctx *ctx;
+	unsigned long flags;
+	printk(KERN_INFO "%s\n", __func__);
+	spin_lock_irqsave(&cameric->slock, flags);
+	/* Clear for full H/W setup in first run after resume */
+	ctx = cameric->m2m.ctx;
+	cameric->m2m.ctx = NULL;
+	spin_unlock_irqrestore(&cameric->slock, flags);
+
+	if (test_and_clear_bit(ST_M2M_SUSPENDED, &cameric->state))
+		cameric_m2m_job_finish(ctx, VB2_BUF_STATE_ERROR);
+
+	return 0;
+}
+#endif /* CONFIG_PM */
+
+
 
 
 
@@ -1027,7 +1027,7 @@ static int cameric_probe(struct platform_device *pdev)
 	node = of_parse_phandle(np, "rockchip,grf", 0);
 	if(!node)
 		return -ENODEV;
-	printk(KERN_INFO "%s 5, node name:%s\n", __func__, node->name);
+	printk(KERN_INFO "%s 5\n", __func__);
 	cameric->regmap_grf = syscon_node_to_regmap(node);
 	if (IS_ERR_OR_NULL(cameric->regmap_grf))
 		return PTR_ERR(cameric->regmap_grf);
@@ -1292,7 +1292,7 @@ static const struct of_device_id cameric_of_match[] = {
 		.compatible = "cameric,rk3288",
 		.data = &cameric_drvdata_rk3288,
 	},	{
-		.compatible = "rockchip,rk3399-cameric",
+		.compatible = "cameric,rk3399",
 		.data = &cameric_drvdata_rk3399,
 	},
 	{ /* sentinel */ },

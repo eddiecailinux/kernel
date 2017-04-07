@@ -541,21 +541,20 @@ static int register_cameric_entity(struct cameric_md *cmd, struct cameric_dev *c
 	struct v4l2_subdev *sd;
 	struct cameric_media_pipeline *ep;
 	int ret;
-	printk(KERN_INFO "%s 1\n", __func__);
+	printk(KERN_INFO "%s \n", __func__);
 	if (WARN_ON(cameric->id >= CAMERIC_MAX_DEVS || cmd->cameric[cameric->id]))
 		return -EBUSY;
-	printk(KERN_INFO "%s 2\n", __func__);
+
 	sd = &cameric->vid_cap.subdev;
 	sd->grp_id = GRP_ID_CAMERIC;
-	printk(KERN_INFO "%s 3, function:%x\n", __func__, sd->entity.function);
+
 	ep = cameric_md_pipeline_create(cmd);
 	if (!ep)
 		return -ENOMEM;
-	printk(KERN_INFO "%s 4\n", __func__);
+
 	v4l2_set_subdev_hostdata(sd, ep);
-	printk(KERN_INFO "%s 5\n", __func__);
+
 	ret = v4l2_device_register_subdev(&cmd->v4l2_dev, sd);
-	printk(KERN_INFO "%s 6\n", __func__);
 	if (!ret) {
 		if (!cmd->pmf && cameric->pdev)
 			cmd->pmf = &cameric->pdev->dev;
@@ -565,7 +564,6 @@ static int register_cameric_entity(struct cameric_md *cmd, struct cameric_dev *c
 		v4l2_err(&cmd->v4l2_dev, "Failed to register cameric.%d (%d)\n",
 			 cameric->id, ret);
 	}
-	printk(KERN_INFO "%s 7\n", __func__);
 	return ret;
 }
 
@@ -625,21 +623,23 @@ static int cameric_md_register_platform_entity(struct cameric_md *cmd,
 	struct device *dev = &pdev->dev;
 	int ret = -EPROBE_DEFER;
 	void *drvdata;
-	printk(KERN_INFO "%s 1\n", __func__);
+	printk(KERN_INFO "%s \n", __func__);
 	/* Lock to ensure dev->driver won't change. */
 	device_lock(dev);
-	printk(KERN_INFO "%s 2\n", __func__);
+
 	if (!dev->driver || !try_module_get(dev->driver->owner))
 		goto dev_unlock;
-	printk(KERN_INFO "%s 3\n", __func__);
+
 	drvdata = dev_get_drvdata(dev);
-	printk(KERN_INFO "%s 4\n", __func__);
 	/* Some subdev didn't probe successfully id drvdata is NULL */
 	if (drvdata) {
 		switch (plat_entity) {
 		case IDX_CAMERIC:
 			ret = register_cameric_entity(cmd, drvdata);
 			break;
+		//case IDX_FLITE:
+		//	ret = register_cameric_lite_entity(cmd, drvdata);
+		//	break;
 		case IDX_CSIS:
 			ret = register_csis_entity(cmd, pdev, drvdata);
 			break;
@@ -650,9 +650,8 @@ static int cameric_md_register_platform_entity(struct cameric_md *cmd,
 			ret = -ENODEV;
 		}
 	}
-	printk(KERN_INFO "%s 5n", __func__);
+
 	module_put(dev->driver->owner);
-	printk(KERN_INFO "%s 6\n", __func__);
 dev_unlock:
 	device_unlock(dev);
 	if (ret == -EPROBE_DEFER)
@@ -670,7 +669,7 @@ static int cameric_md_register_platform_entities(struct cameric_md *cmd,
 {
 	struct device_node *node;
 	int ret = 0;
-	printk(KERN_INFO "%s 1, parent node name;%s\n", __func__, parent->name);
+	printk(KERN_INFO "%s 1\n", __func__);
 	for_each_available_child_of_node(parent, node) {
 		struct platform_device *pdev;
 		int plat_entity = -1;
@@ -684,9 +683,12 @@ static int cameric_md_register_platform_entities(struct cameric_md *cmd,
 			plat_entity = IDX_CSIS;
 		else if	(!strcmp(node->name, CAMERIC_IS_OF_NODE_NAME))
 			plat_entity = IDX_IS_ISP;
-		else if	(!strcmp(node->name, CAMERIC_OF_NODE_NAME))
+		//else if (!strcmp(node->name, FIMC_LITE_OF_NODE_NAME))
+			//plat_entity = IDX_FLITE;
+		else if	(!strcmp(node->name, CAMERIC_OF_NODE_NAME) &&
+			 !of_property_read_bool(node, "samsung,lcd-wb"))
 			plat_entity = IDX_CAMERIC;
-		printk(KERN_INFO "%s 23, plat_entity=%d\n", __func__, plat_entity);
+		printk(KERN_INFO "%s 23\n", __func__);
 		if (plat_entity >= 0)
 			ret = cameric_md_register_platform_entity(cmd, pdev,
 							plat_entity);
@@ -1341,11 +1343,10 @@ unlock:
 static int cameric_md_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
 	struct v4l2_device *v4l2_dev;
 	struct cameric_md *cmd;
 	int ret;
-	printk(KERN_INFO "%s 1, device node name:%s\n", __func__, dev->of_node->name);
+	printk(KERN_INFO "%s 1\n", __func__);
 	cmd = devm_kzalloc(dev, sizeof(*cmd), GFP_KERNEL);
 	if (!cmd)
 		return -ENOMEM;
