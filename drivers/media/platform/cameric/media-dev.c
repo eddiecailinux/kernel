@@ -478,9 +478,9 @@ static int cameric_md_register_sensor_entities(struct cameric_md *cmd)
 	if (!cmd->pmf)
 		return -ENXIO;
 	printk(KERN_INFO "%s 2\n", __func__);
-	ret = pm_runtime_get_sync(cmd->pmf);
-	if (ret < 0)
-		return ret;
+	//ret = pm_runtime_get_sync(cmd->pmf);
+	//if (ret < 0)
+	//	return ret;
 	printk(KERN_INFO "%s 3\n", __func__);
 	cmd->num_sensors = 0;
 
@@ -521,7 +521,7 @@ static int cameric_md_register_sensor_entities(struct cameric_md *cmd)
 	}
 	printk(KERN_INFO "%s 11 \n", __func__);
 rpm_put:
-	pm_runtime_put(cmd->pmf);
+	//pm_runtime_put(cmd->pmf);
 	return ret;
 }
 
@@ -628,7 +628,7 @@ static int cameric_md_register_platform_entity(struct cameric_md *cmd,
 	printk(KERN_INFO "%s 1\n", __func__);
 	/* Lock to ensure dev->driver won't change. */
 	device_lock(dev);
-	printk(KERN_INFO "%s 2, driver=%x\n", __func__, dev->driver);
+	printk(KERN_INFO "%s 2, driver=%x, name:%s\n", __func__, dev->driver, dev_name(dev));
 	if (!dev->driver || !try_module_get(dev->driver->owner))
 		goto dev_unlock;
 	printk(KERN_INFO "%s 3\n", __func__);

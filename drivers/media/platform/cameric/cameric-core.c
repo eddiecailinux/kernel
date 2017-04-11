@@ -1007,6 +1007,7 @@ static int cameric_probe(struct platform_device *pdev)
 	u32 lclk_freq = 0;
 	struct cameric_dev *cameric;
 	struct resource *res;
+	const struct of_device_id *of_id;
 	int ret = 0;
 	printk(KERN_INFO "%s 1\n", __func__);
 	cameric = devm_kzalloc(dev, sizeof(*cameric), GFP_KERNEL);
@@ -1018,7 +1019,7 @@ static int cameric_probe(struct platform_device *pdev)
 
 
 
-	printk(KERN_INFO "%s 2\n", __func__);
+	printk(KERN_INFO "%s 2, np->name=%s\n", __func__, np->name);
 	node = of_parse_phandle(np, "rockchip,grf", 0);
 	if(!node)
 		return -ENODEV;
@@ -1049,14 +1050,18 @@ static int cameric_probe(struct platform_device *pdev)
 		return PTR_ERR(cameric->base_addr);
 	printk(KERN_INFO "%s 8\n", __func__);
 
+	of_id = of_match_node(cameric_of_match, np);
+	if (!of_id)
+		return -EINVAL;
+	cameric->drv_data = of_id->data;
+	//cameric->id = of_alias_get_id(np, "camera");
+	//if (!dev->of_node) {
+	//	cameric->drv_data = cameric_get_drvdata(pdev);
+	//	cameric->id = pdev->id;
+	//}
 
-
-	if (!dev->of_node) {
-		cameric->drv_data = cameric_get_drvdata(pdev);
-		cameric->id = pdev->id;
-	}
-	if (!cameric->drv_data || cameric->id >= cameric->drv_data->num_entities ||
-			cameric->id < 0) {
+	if (!cameric->drv_data /*|| cameric->id >= cameric->drv_data->num_entities ||
+			cameric->id < 0*/) {
 		dev_err(dev, "Invalid driver data or device id (%d)\n",
 				cameric->id);
 		return -EINVAL;

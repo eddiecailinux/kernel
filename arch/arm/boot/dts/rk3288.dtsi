@@ -972,13 +972,13 @@
 				status = "okay";
 			};
 			csis_0: csis@11880000 {
-				compatible = "samsung,exynos4210-csis";
+				compatible = "rockchip,rk3288-csis";
 				reg = <0x11880000 0x4000>;
 				interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
 				clock-names = "csis", "sclk_csis";
 				bus-width = <4>;
 				phy-names = "csis";
-				status = "disabled";
+				status = "okay";
 				#address-cells = <1>;
 				#size-cells = <0>;
 			};

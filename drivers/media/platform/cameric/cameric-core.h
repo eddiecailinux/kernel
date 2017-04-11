@@ -35,7 +35,7 @@
 /* Time to wait for next frame VSYNC interrupt while stopping operation. */
 #define CAMERIC_SHUTDOWN_TIMEOUT	((100*HZ)/1000)
 #define MAX_CAMERIC_CLOCKS		2
-#define CAMERIC_DRIVER_NAME	"cameric4-cameric"
+#define CAMERIC_DRIVER_NAME	"cameric"
 #define CAMERIC_MAX_DEVS		4
 #define CAMERIC_MAX_OUT_BUFS	4
 #define SCALER_MAX_HRATIO	64
