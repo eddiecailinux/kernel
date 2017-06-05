@@ -2,6 +2,8 @@
 # Makefile for the V4L2 core
 #
 
+KBUILD_CFLAGS += -O0
+
 tuner-objs	:=	tuner-core.o
 
 videodev-objs	:=	v4l2-dev.o v4l2-ioctl.o v4l2-device.o v4l2-fh.o \
@@ -44,4 +46,3 @@ obj-$(CONFIG_VIDEOBUF2_DVB) += videobuf2-dvb.o
 ccflags-y += -I$(srctree)/drivers/media/dvb-core
 ccflags-y += -I$(srctree)/drivers/media/dvb-frontends
 ccflags-y += -I$(srctree)/drivers/media/tuners
-
