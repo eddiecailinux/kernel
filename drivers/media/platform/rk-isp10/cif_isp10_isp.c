@@ -2607,7 +2607,8 @@ static int cifisp_reqbufs(struct file *file, void *priv,
 	CIFISP_DPRINT(CIFISP_DEBUG,
 		      " %s: %s: p->type %d p->count %d\n",
 		      ISP_VDEV_NAME, __func__, p->type, p->count);
-    return vb2_core_reqbufs(&isp_dev->vb2_vidq, p->type, &p->count);
+	//return vb2_core_reqbufs(&isp_dev->vb2_vidq, p->type, &p->count);
+    return vb2_ioctl_reqbufs(file, priv, p);
 }
 
 static int cifisp_querybuf(struct file *file, void *priv, struct v4l2_buffer *p)
@@ -2618,7 +2619,8 @@ static int cifisp_querybuf(struct file *file, void *priv, struct v4l2_buffer *p)
 	CIFISP_DPRINT(CIFISP_DEBUG,
 		      " %s: %s: p->type %d p->index %d\n",
 		      ISP_VDEV_NAME, __func__, p->type, p->index);
-	return vb2_core_querybuf(&isp_dev->vb2_vidq, p->index, p);
+	//return vb2_core_querybuf(&isp_dev->vb2_vidq, p->index, p);
+	return vb2_ioctl_querybuf(file, priv, p);
 }
 
 static int cifisp_qbuf(struct file *file, void *priv, struct v4l2_buffer *p)
@@ -2642,7 +2644,8 @@ static int cifisp_dqbuf(struct file *file, void *priv, struct v4l2_buffer *p)
 	CIFISP_DPRINT(CIFISP_DEBUG,
 		      " %s: %s: p->type %d p->index %d\n",
 		      ISP_VDEV_NAME, __func__, p->type, p->index);
-	return vb2_core_dqbuf(&isp_dev->vb2_vidq, p, file->f_flags & O_NONBLOCK);
+	//return vb2_core_dqbuf(&isp_dev->vb2_vidq, p, file->f_flags & O_NONBLOCK);
+	return vb2_ioctl_dqbuf(file, priv, p);
 }
 
 static int cifisp_streamon(struct file *file, void *priv, enum v4l2_buf_type i)
@@ -3300,7 +3303,8 @@ int register_cifisp_device(struct cif_isp10_isp_dev *isp_dev,
 
 	vdev_cifisp->queue = &isp_dev->vb2_vidq;
 
-	ret = media_entity_init(&vdev_cifisp->entity, 1, &node->pad, 0);
+	//ret = media_entity_init(&vdev_cifisp->entity, 1, &node->pad, 0);
+	ret = media_entity_pads_init(&vdev_cifisp->entity, 1, &node->pad);
 	if (ret)
 		goto err;
 

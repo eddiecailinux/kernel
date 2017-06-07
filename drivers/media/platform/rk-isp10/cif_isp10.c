@@ -5209,8 +5209,9 @@ int register_cifisp_isp_subdev(struct cif_isp10_device *isp_dev,
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_MP].flags = MEDIA_PAD_FL_SOURCE;
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_SP].flags = MEDIA_PAD_FL_SOURCE;
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_STATS].flags = MEDIA_PAD_FL_SOURCE;
-	ret = media_entity_init(&sd->entity, CIF_ISP10_ISP_PAD_MAX,
-							isp_dev->pads, 0);
+	//ret = media_entity_init(&sd->entity, CIF_ISP10_ISP_PAD_MAX,
+	//						isp_dev->pads, 0);
+	ret = media_entity_pads_init(&sd->entity, CIF_ISP10_ISP_PAD_MAX, isp_dev->pads);
 	if (ret)
 		return ret;
 
@@ -5764,7 +5765,8 @@ int cif_isp10_s_ctrl(
 		ctrl.value = val;
 		//TODO(zsq) why not just use v4l2_cid
 		ctrl.id = cif_isp10_v4l2_cid2v4l2_cid(id);
-		return v4l2_subdev_call(sensor, core, s_ctrl, &ctrl);
+		//return v4l2_subdev_call(sensor, core, s_ctrl, &ctrl);
+		return v4l2_g_ctrl(sensor->ctrl_handler, &ctrl);
 	}
 	default:
 		cif_isp10_pltfrm_pr_err(dev->dev,

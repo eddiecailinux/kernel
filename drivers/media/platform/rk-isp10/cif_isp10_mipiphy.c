@@ -344,7 +344,8 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 
 	priv->pads[MIPIPHY_PAD_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
 	priv->pads[MIPIPHY_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
-	ret = media_entity_init(&sd->entity, MIPIPHY_PADS_NUM, priv->pads, 0);
+	//ret = media_entity_init(&sd->entity, MIPIPHY_PADS_NUM, priv->pads, 0);
+	ret = media_entity_pads_init(&sd->entity, MIPIPHY_PADS_NUM, priv->pads);
 	if (ret)
 		return ret;
 

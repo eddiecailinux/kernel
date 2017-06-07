@@ -454,6 +454,16 @@ config VIDEO_ROCKCHIP_VPU
 	  To compile this driver as a module, choose M here: the module
 	  will be called rockchip-vpu.
 
+config CONFIG_VIDEO_RK_MIPIPHY
+	tristate "Rockchip mipi phy"
+	depends on VIDEO_V4L2
+	select MEDIA_CONTROLLER
+	default n
+
+	---help---
+	  Say Y here to enable selecting the
+	  rockchip cif isp10 camera sensors
+
 config VIDEO_RK_CIF_ISP10
 	tristate "Rockchip cif isp10 camera sensors"
 	depends on VIDEO_V4L2 && I2C

@@ -373,8 +373,9 @@ static int register_stream_subdev(
 
 	strm_subdev->pads[0].flags = MEDIA_PAD_FL_SINK;
 	strm_subdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
-	ret = media_entity_init(&sd->entity, 2,
-							strm_subdev->pads, 0);
+	//ret = media_entity_init(&sd->entity, 2,
+	//						strm_subdev->pads, 0);
+	ret = media_entity_pads_init(&sd->entity, 2, strm_subdev->pads);
 	if (ret)
 			return ret;
 
@@ -444,7 +445,8 @@ static int cif_isp10_v4l2_register_video_device(
 		node->pad.flags = MEDIA_PAD_FL_SINK;
 	}
 
-	ret = media_entity_init(&vdev->entity, 1, &node->pad, 0);
+	//ret = media_entity_init(&vdev->entity, 1, &node->pad, 0);
+	ret = media_entity_pads_init(&vdev->entity, 1, &node->pad);
 	if (ret < 0)
 			return ret;
 
@@ -861,7 +863,7 @@ static int cif_isp10_v4l2_open(
 	/* First open of the device, so initialize everything */
 	node->owner = fh;
 
-	dev->alloc_ctx = vb2_dma_contig_init_ctx(dev->dev);
+	//dev->alloc_ctx = vb2_dma_contig_init_ctx(dev->dev);
 	cif_isp10_init_vb2_queue(to_vb2_queue(file), dev, buf_type);
 	vdev->queue = to_vb2_queue(file);
 
@@ -1475,9 +1477,11 @@ static int	__isp_pipeline_prepare(struct cif_isp10_pipeline *p,
 						break;
 		}
 
-		if (pad == NULL ||
-			media_entity_type(pad->entity) != MEDIA_ENT_T_V4L2_SUBDEV)
-				break;
+		//if (pad == NULL ||
+		//	media_entity_type(pad->entity) != MEDIA_ENT_T_V4L2_SUBDEV)
+		//		break;
+		if (pad == NULL || is_media_entity_v4l2_subdev(pad->entity))
+			break;
 		sd = media_entity_to_v4l2_subdev(pad->entity);
 
 		switch (sd->grp_id) {
@@ -1632,15 +1636,20 @@ static int cif_isp10_create_links(struct cif_isp10_device *dev)
 	//TODO: create sensor->mipiphy links
 	source = &dev->subdevs[CIF_ISP10_SD_SENSOR]->entity;
 	sink = &dev->subdevs[CIF_ISP10_SD_PHY_CSI]->entity;
-	ret = media_entity_create_link(source, 0, //TODO(zsq) Find the source pad
+	//ret = media_entity_create_link(source, 0, //TODO(zsq) Find the source pad
+	//			       sink, MIPIPHY_PAD_SINK, flags);
+	ret = media_create_pad_link(source, 0, //TODO(zsq) Find the source pad
 				       sink, MIPIPHY_PAD_SINK, flags);
+
 	if (ret)
 		return ret;
 	//TODO: create sensor->isp links
 	//TODO: create mipiphy->isp links
 	source = &dev->subdevs[CIF_ISP10_SD_PHY_CSI]->entity;
 	sink = &dev->isp_sub_dev.entity;
-	ret = media_entity_create_link(source, MIPIPHY_PAD_SOURCE,
+	//ret = media_entity_create_link(source, MIPIPHY_PAD_SOURCE,
+	//			       sink, CIF_ISP10_ISP_PAD_SINK_MIPI, flags);
+	ret = media_create_pad_link(source, MIPIPHY_PAD_SOURCE,
 				       sink, CIF_ISP10_ISP_PAD_SINK_MIPI, flags);
 	if (ret)
 		return ret;
@@ -1649,35 +1658,43 @@ static int cif_isp10_create_links(struct cif_isp10_device *dev)
 	//SP links
 	source = &dev->isp_sub_dev.entity ;
 	sink = &dev->sp_strm_subdev.subdev.entity;
-	ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_SP,
+	//ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_SP,
+	//			       sink, 0, flags);
+	ret = media_create_pad_link(source, CIF_ISP10_ISP_PAD_SOURCE_SP,
 				       sink, 0, flags);
 	if (ret)
 		return ret;
 
 	source = &dev->sp_strm_subdev.subdev.entity;
 	sink = &cif_isp10_v4l2_dev->node[SP_DEV].vdev.entity;;
-	ret = media_entity_create_link(source, 1, sink, 0, flags);
+	//ret = media_entity_create_link(source, 1, sink, 0, flags);
+	ret = media_create_pad_link(source, 1, sink, 0, flags);
 	if (ret)
 		return ret;
 
 	//MP links
 	source = &dev->isp_sub_dev.entity ;
 	sink = &dev->mp_strm_subdev.subdev.entity;
-	ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_MP,
+	//ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_MP,
+	//			       sink, 0, flags);
+	ret = media_create_pad_link(source, CIF_ISP10_ISP_PAD_SOURCE_MP,
 				       sink, 0, flags);
 	if (ret)
 		return ret;
 
 	source = &dev->mp_strm_subdev.subdev.entity;
 	sink = &cif_isp10_v4l2_dev->node[MP_DEV].vdev.entity;;
-	ret = media_entity_create_link(source, 1, sink, 0, flags);
+	//ret = media_entity_create_link(source, 1, sink, 0, flags);
+	ret = media_create_pad_link(source, 1, sink, 0, flags);
 	if (ret)
 		return ret;
 
 	//3A stats links
 	source = &dev->isp_sub_dev.entity ;
 	sink = &cif_isp10_v4l2_dev->node[ISP_DEV].vdev.entity;;
-	ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_STATS,
+	//ret = media_entity_create_link(source, CIF_ISP10_ISP_PAD_SOURCE_STATS,
+	//			       sink, 0, flags);
+	ret = media_create_pad_link(source, CIF_ISP10_ISP_PAD_SOURCE_STATS,
 				       sink, 0, flags);
 	return ret;
 }
@@ -2007,7 +2024,8 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 	//      init v4l cif_isp10_device->media_dev
 	strlcpy(dev->media_dev.model, "ROCKCHIP ISP",
 			sizeof(dev->media_dev.model));
-	dev->media_dev.link_notify = cif_isp10_v4l2_md_link_notify;
+	//dev->media_dev.link_notify = cif_isp10_v4l2_md_link_notify;
+	//dev->media_dev.ops->link_notify = cif_isp10_v4l2_md_link_notify;
 	dev->media_dev.dev = &pdev->dev;
 	
 	v4l2_dev = &dev->v4l2_dev;
