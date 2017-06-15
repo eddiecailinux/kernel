@@ -690,6 +690,27 @@
 		status = "disabled";
 	};
 
+	isp0: isp0@ff910000 {
+		compatible = "rockchip,rk3288-cif-isp";
+		reg = <0xff910000 0x10000>, <0xff968000 0x4000>;
+		clocks = <&cru ACLK_ISP>, <&cru HCLK_ISP>,
+			<&cru SCLK_ISP>, <&cru PCLK_ISP_IN>;
+		clock-names = "clk-isp", "aclk_isp", "hclk_isp",
+			"sclk_isp", "pclk_isp_in";
+		interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
+		resets = <&cru SRST_ISP>;
+		reset-names = "rst_isp";
+		status = "disabled";
+		power-domains = <&power RK3288_PD_VIO>;
+		mipi_phy_rx0: mipi-phy-rx0 {
+			compatible = "rockchip,rk3288-isp-mipi-phy";
+			rockchip,grf = <&grf>;
+			clocks = <&cru PCLK_MIPI_CSI>;
+			clock-names = "mipi_csi";
+			status = "disabled";
+		};
+	};
+
 	bus_intmem@ff700000 {
 		compatible = "mmio-sram";
 		reg = <0xff700000 0x18000>;

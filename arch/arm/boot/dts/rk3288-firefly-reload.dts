@@ -66,6 +66,13 @@
 		gpios = <&gpio7 RK_PA0 GPIO_ACTIVE_LOW>;
 	};
 
+	hdmi_osc: hdmi-osc {
+		compatible = "fixed-clock";
+		clock-output-names = "hdmi-osc";
+		clock-frequency = <27000000>;
+		#clock-cells = <0>;
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -227,6 +234,32 @@
 	};
 };
 
+&i2c1 {
+		status = "okay";
+		clock-frequency = <48000>;
+        tc358743: tc358743@1f {
+                compatible = "toshiba,tc358743";
+                reg = <0x1f>;
+                clocks = <&hdmi_osc>;
+                clock-names = "refclk";
+                reset-gpios = <&gpio8 8 GPIO_ACTIVE_LOW>;//262
+				stby-gpios = <&gpio7 5 GPIO_ACTIVE_LOW>;
+                /* IRQ has a wrong pull resistor which renders it useless  */
+                pinctrl-names = "default";
+                pinctrl-0 = <&tc358743_pwr &tc358743_int &tc358743_stby &tc358743_rst>;
+
+                port@0 {
+                        tc358743_out: endpoint {
+                                remote-endpoint = <&isp_mipi_in>;
+                                data-lanes = <1 2 3 4>;
+                                clock-lanes = <0>;
+                                clock-noncontinuous;
+                                link-frequencies = /bits/ 64 <297000000>;
+                        };
+                };
+        };
+};
+
 &i2c2 {
 	status = "okay";
 
@@ -315,7 +348,39 @@
 	status = "okay";
 };
 
+&isp0 {
+	status = "okay";
+};
+
+&mipi_phy_rx0 {
+	status = "okay";
+
+	port {
+		isp_mipi_in: endpoint {
+			remote-endpoint = <&tc358743_out>;
+		};
+	};
+};
+
 &pinctrl {
+	hdmi2mipi {
+		tc358743_pwr: tc358743-pwr {
+			rockchip,pins = <7 21 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		tc358743_int: tc358743-int {
+			rockchip,pins = <8 9 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+
+		tc358743_stby: tc358743-stby {
+			rockchip,pins = <7 5 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+
+		tc358743_rst: tc358743-rst {
+			rockchip,pins = <8 8 RK_FUNC_GPIO &pcfg_pull_down>;
+		};
+	};
+
 	ir {
 		ir_int: ir-int {
 			rockchip,pins = <7 0 RK_FUNC_GPIO &pcfg_pull_up>;

@@ -373,6 +373,7 @@ static int register_stream_subdev(
 
 	strm_subdev->pads[0].flags = MEDIA_PAD_FL_SINK;
 	strm_subdev->pads[1].flags = MEDIA_PAD_FL_SOURCE;
+	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_SCALER;
 	//ret = media_entity_init(&sd->entity, 2,
 	//						strm_subdev->pads, 0);
 	ret = media_entity_pads_init(&sd->entity, 2, strm_subdev->pads);
@@ -701,7 +702,7 @@ static int cif_isp10_v4l2_vb2_queue_setup(struct vb2_queue *queue,
 		*num_buffers = 4;
 		*num_planes = 1;
 		ret = cif_isp10_calc_min_out_buff_size(dev, strm, &sizes[0]);
-		alloc_ctxs[0] = dev->alloc_ctx;
+		alloc_ctxs[0] = dev;
 		if (ret)
 			return -EINVAL;
 	} else { /* Called from VIDIOC_CREATE_BUFS */
@@ -1789,33 +1790,38 @@ static int register_mipiphy_subdev(struct cif_isp10_device *isp_dev)
 	struct platform_device *mipi_pdev;
 	struct device_node *of_mipi;
 	int ret;
-
+printk("register_mipiphy_subdev1\n");
 	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
 	if (ret) {
 		dev_err(dev, "Failed to populate child mipiphy(%d)\n", ret);
 		return ret;
 	}
-
+printk("register_mipiphy_subdev2\n");
 	of_mipi = of_get_next_available_child(dev->of_node, NULL);
 	if (!of_mipi) {
 		dev_err(dev, "Mipiphy as child node is expected\n");
 		return -EINVAL;
 	}
+	printk("register_mipiphy_subdev3\n");
 	mipi_pdev = of_find_device_by_node(of_mipi);
 	if (!mipi_pdev) {
 		dev_err(dev, "Defer for mipiphy device is not ready\n");
 		ret = -EPROBE_DEFER;
 		goto of_put;
 	}
-
+printk("register_mipiphy_subdev4\n");
 	me = platform_get_drvdata(mipi_pdev);
+	printk("register_mipiphy_subdev5\n");
 	BUG_ON(!me);
+	printk("register_mipiphy_subdev6\n");
 	sd = media_entity_to_v4l2_subdev(me);
+	printk("register_mipiphy_subdev7\n");
 	ret = v4l2_device_register_subdev(&isp_dev->v4l2_dev, sd);
 	if (ret) {
 		v4l2_err(&isp_dev->v4l2_dev, "Failed to register phy subdev\n");
 		goto of_put;
 	}
+	printk("register_mipiphy_subdev8\n");
 	isp_dev->subdevs[CIF_ISP10_SD_PHY_CSI] = sd;
 
 	ret = isp_subdev_notifier(isp_dev, of_mipi);
@@ -1823,8 +1829,9 @@ static int register_mipiphy_subdev(struct cif_isp10_device *isp_dev)
 		v4l2_err(sd, "Failed to register subdev notifier(%d)\n", ret);
 		goto unregister_sd;
 	}
+	printk("register_mipiphy_subdev9\n");
 	of_node_put(of_mipi);
-
+printk("register_mipiphy_subdev10\n");
 	return 0;
 
 unregister_sd:
@@ -1927,14 +1934,17 @@ static int register_platform_subdevs(struct cif_isp10_device *dev)
 	struct cif_isp10_isp_dev *isp_dev = &dev->isp_dev;
 	struct cif_isp10_v4l2_device* cif_isp10_v4l2_dev =
 		(struct cif_isp10_v4l2_device*)dev->nodes;
+		printk("register_platform_subdevs1\n");
 	//register isp v4l2 subdev
 	ret = register_cifisp_isp_subdev(dev, &dev->v4l2_dev);
 	if (ret)
 		goto err;
+		printk("register_platform_subdevs2\n");
 	ret = register_stream_subdevs(dev);
 	if (ret)
 		goto err_isp_subdev;
 	// register  ISP(3A stats)dev
+	printk("register_platform_subdevs3\n");
 	ret = register_cifisp_device(isp_dev,
 		&cif_isp10_v4l2_dev->node[ISP_DEV].vdev,
 		&dev->v4l2_dev,
@@ -1942,9 +1952,11 @@ static int register_platform_subdevs(struct cif_isp10_device *dev)
 	if (ret)
 		goto err_stream_subdevs;
 	// register mipi dev
+	printk("register_platform_subdevs4\n");
 	ret = register_mipiphy_subdev(dev);
 	if (ret)
 		goto err_isp_device;
+		printk("register_platform_subdevs5\n");
 	return 0;
 err_isp_device:
 	unregister_cifisp_device(&cif_isp10_v4l2_dev->node[ISP_DEV].vdev);
@@ -2003,7 +2015,7 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 		ret = -ENOMEM;
 		goto err;
 	}
-
+printk("cif_isp10_v4l2_drv_probe1\n");
 	match = of_match_node(cif_isp10_v4l2_of_match, node);
 	dev = cif_isp10_create(&pdev->dev,
 		cif_isp10_v4l2_event,
@@ -2012,14 +2024,14 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 		ret = -ENODEV;
 		goto err;
 	}
-
+printk("cif_isp10_v4l2_drv_probe2\n");
 	dev->dev_id = cif_isp10_v4l2_dev_cnt;
 	dev->isp_dev.dev_id = &dev->dev_id;
 	dev->nodes = (void *)cif_isp10_v4l2_dev;
 	spin_lock_init(&dev->vbq_lock);
 	spin_lock_init(&dev->vbreq_lock);
 	spin_lock_init(&iowrite32_verify_lock);
-
+printk("cif_isp10_v4l2_drv_probe3\n");
 	// 1.  init v4l cif_isp10_device->v4l2_dev->mdev, notify
 	//      init v4l cif_isp10_device->media_dev
 	strlcpy(dev->media_dev.model, "ROCKCHIP ISP",
@@ -2033,7 +2045,9 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 	//TODO: set v4l2 dev notify, maybe not neccesary.
 	v4l2_dev->notify = NULL;
 	strlcpy(v4l2_dev->name, "rk-isp10", sizeof(v4l2_dev->name));
-	
+printk("cif_isp10_v4l2_drv_probe4\n");
+	media_device_init(&dev->media_dev);
+
 	// 2.  register v4l2 dev, register media dev
 	ret = v4l2_device_register(dev->dev, &dev->v4l2_dev);
 	if (IS_ERR_VALUE(ret)) {
@@ -2041,7 +2055,7 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 			"V4L2 device registration failed\n");
 		goto err;
 	}
-	
+	printk("cif_isp10_v4l2_drv_probe5\n");
 	ret = media_device_register(&dev->media_dev);
 	if (ret < 0) {
 			v4l2_err(v4l2_dev, "Failed to register media device: %d\n", ret);
@@ -2049,15 +2063,15 @@ static int cif_isp10_v4l2_drv_probe(struct platform_device *pdev)
 	}
 
 	dev->num_sensors = 0;
-
+printk("cif_isp10_v4l2_drv_probe6\n");
 	// 3.  create & register platefom subdev (from of_node)
 	ret = register_platform_subdevs(dev);
 	if (ret)
 		goto err_mdev;
-
+printk("cif_isp10_v4l2_drv_probe7\n");
 	pm_runtime_enable(&pdev->dev);
 	cif_isp10_v4l2_dev_cnt++;
-
+printk("cif_isp10_v4l2_drv_probe8\n");
 	return 0;
 
 err_mdev:

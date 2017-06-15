@@ -99,6 +99,7 @@ struct tc358743_state {
 	u8 csi_lanes_in_use;
 
 	struct gpio_desc *reset_gpio;
+	struct gpio_desc *stby_gpio;
 };
 
 static void tc358743_enable_interrupts(struct v4l2_subdev *sd,
@@ -1700,7 +1701,7 @@ static int tc358743_probe_of(struct tc358743_state *state)
 	struct clk *refclk;
 	u32 bps_pr_lane;
 	int ret = -EINVAL;
-
+printk("tc358743_probe_of\n");
 	refclk = devm_clk_get(dev, "refclk");
 	if (IS_ERR(refclk)) {
 		if (PTR_ERR(refclk) != -EPROBE_DEFER)
@@ -1785,7 +1786,15 @@ static int tc358743_probe_of(struct tc358743_state *state)
 	state->pdata.tclk_postcnt = 0x008;
 	state->pdata.ths_trailcnt = 0x2;
 	state->pdata.hstxvregcnt = 0;
-
+printk("tc358743_probe_of, get stby gpio\n");
+	state->stby_gpio = devm_gpiod_get_optional(dev, "stby",
+						    GPIOD_OUT_LOW);
+	if (IS_ERR(state->stby_gpio)) {
+		dev_err(dev, "failed to get stby gpio\n");
+		ret = PTR_ERR(state->stby_gpio);
+		goto disable_clk;
+	}
+printk("tc358743_probe_of, get rst gpio\n");
 	state->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						    GPIOD_OUT_LOW);
 	if (IS_ERR(state->reset_gpio)) {
@@ -1793,9 +1802,13 @@ static int tc358743_probe_of(struct tc358743_state *state)
 		ret = PTR_ERR(state->reset_gpio);
 		goto disable_clk;
 	}
-
-	if (state->reset_gpio)
-		tc358743_gpio_reset(state);
+	usleep_range(50, 100);
+	gpiod_set_value(state->stby_gpio, 1);
+	usleep_range(100, 200);
+	gpiod_set_value(state->reset_gpio, 1);
+	msleep(2);
+	//if (state->reset_gpio)
+	//	tc358743_gpio_reset(state);
 
 	ret = 0;
 	goto free_endpoint;
@@ -1822,12 +1835,13 @@ static int tc358743_probe(struct i2c_client *client,
 	struct tc358743_platform_data *pdata = client->dev.platform_data;
 	struct v4l2_subdev *sd;
 	int err;
-
+printk("tc358743_probe1\n");
 	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
 		return -EIO;
+		debug = 1111;
 	v4l_dbg(1, debug, client, "chip found @ 0x%x (%s)\n",
 		client->addr << 1, client->adapter->name);
-
+printk("tc358743_probe2\n");
 	state = devm_kzalloc(&client->dev, sizeof(struct tc358743_state),
 			GFP_KERNEL);
 	if (!state)
@@ -1846,21 +1860,21 @@ static int tc358743_probe(struct i2c_client *client,
 		if (err)
 			return err;
 	}
-
+printk("tc358743_probe3\n");
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, client, &tc358743_ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE | V4L2_SUBDEV_FL_HAS_EVENTS;
-
+printk("tc358743_probe4\n");
 	/* i2c access */
 	if ((i2c_rd16(sd, CHIPID) & MASK_CHIPID) != 0) {
 		v4l2_info(sd, "not a TC358743 on address 0x%x\n",
 			  client->addr << 1);
 		return -ENODEV;
 	}
-
+printk("tc358743_probe5\n");
 	/* control handlers */
 	v4l2_ctrl_handler_init(&state->hdl, 3);
-
+printk("tc358743_probe6\n");
 	state->detect_tx_5v_ctrl = v4l2_ctrl_new_std(&state->hdl, NULL,
 			V4L2_CID_DV_RX_POWER_PRESENT, 0, 1, 0, 0);
 

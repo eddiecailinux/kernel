@@ -41,16 +41,38 @@
 	__ret;})
 
 enum reg_name {
-	LANES_ENALBE = 0,
-	FORCE_RX_MODE,
-	FORCE_TX_STOP_MODE,
-	TURN_AROUND_DISABLE,
-	TURN_AROUND_REQUEST,
-	TEST_DIN,
-	TEST_ENABLE,
-	TEST_CLOCK,
-	TEST_CLEAR,
-	TEST_DOUT,
+	GRF_DPHY_RX0_TURNDISABLE = 0,
+	GRF_DPHY_RX0_FORCERXMODE,
+	GRF_DPHY_RX0_FORCETXSTOPMODE,
+	GRF_DPHY_RX0_ENABLE,
+	GRF_DPHY_RX0_TESTCLR,
+	GRF_DPHY_RX0_TESTCLK,
+	GRF_DPHY_RX0_TESTEN,
+	GRF_DPHY_RX0_TESTDIN,
+	GRF_DPHY_RX0_TURNREQUEST,
+	GRF_DPHY_RX0_TESTDOUT,
+	GRF_DPHY_TX0_TURNDISABLE,
+	GRF_DPHY_TX0_FORCERXMODE,
+	GRF_DPHY_TX0_FORCETXSTOPMODE,
+	GRF_DPHY_TX0_TURNREQUEST,
+	GRF_DPHY_TX1RX1_TURNDISABLE,
+	GRF_DPHY_TX1RX1_FORCERXMODE,
+	GRF_DPHY_TX1RX1_FORCETXSTOPMODE,
+	GRF_DPHY_TX1RX1_ENABLE,
+	GRF_DPHY_TX1RX1_MASTERSLAVEZ,
+	GRF_DPHY_TX1RX1_BASEDIR,
+	GRF_DPHY_TX1RX1_ENABLECLK,
+	GRF_DPHY_TX1RX1_TURNREQUEST,
+	GRF_DPHY_RX1_SRC_SEL,
+	GRF_CON_DISABLE_ISP,//3288 only
+	GRF_CON_ISP_DPHY_SEL,//3288 only
+	GRF_DSI_CSI_TESTBUS_SEL,//3288 only
+	GRF_DVP_V18SEL,//3288 only
+	GRF_DISABLE_ISP0,//3399 only
+	GRF_DISABLE_ISP1,//3399 only
+	GRF_DPHY_RX0_CLK_INV_SEL,//3399 only
+	GRF_DPHY_RX1_CLK_INV_SEL,//3399 only
+	GRF_DPHY_END,
 };
 
 struct phy_reg {
@@ -60,58 +82,297 @@ struct phy_reg {
 	u32 shift;
 };
 
-struct phy_reg rk3399_rx0_regs[] = {
+struct phy_reg rk3399_mipy_phy_regs[] = {
 	{
-		.name		= LANES_ENALBE,
-		.reg		= 0x6254, 	/* SOC_CON21 */
-		.bitmask	= GENMASK(3, 0),
+		.name		= GRF_DPHY_RX0_TURNREQUEST,
+		.reg		= 0x6224, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(0, 3),
 		.shift		= 0,
 	}, {
-		.name		= FORCE_RX_MODE,
-		.reg		= 0x6254, 	/* SOC_CON21 */
-		.bitmask	= GENMASK(7, 4),
-		.shift		= 4,
-	}, {
-		.name		= FORCE_TX_STOP_MODE,
-		.reg		= 0x6254, 	/* SOC_CON21 */
-		.bitmask	= GENMASK(11, 8),
-		.shift		= 8,
-	}, {
-		.name		= TURN_AROUND_DISABLE,
-		.reg		= 0x6254, 	/* SOC_CON21 */
-		.bitmask	= GENMASK(15, 12),
-		.shift		= 12,
-	}, {
-		.name		= TURN_AROUND_REQUEST,
-		.reg		= 0x6224, 	/* SOC_CON9 */
-		.bitmask	= GENMASK(3, 0),
-		.shift		= 0,
-	}, {
-		.name		= TEST_DIN,
-		.reg		= 0x6264, 	/* SOC_CON25 */
-		.bitmask	= GENMASK(7, 0),
-		.shift		= 0,
-	}, {
-		.name		= TEST_ENABLE,
-		.reg		= 0x6264, 	/* SOC_CON25 */
+		.name		= GRF_DISABLE_ISP0,
+		.reg		= 0x6224, 	/* GRF_SOC_CON9 */
 		.bitmask	= GENMASK(8, 8),
 		.shift		= 8,
 	}, {
-		.name		= TEST_CLOCK,
-		.reg		= 0x6264, 	/* SOC_CON25 */
+		.name		= GRF_DISABLE_ISP1,
+		.reg		= 0x6224, 	/* GRF_SOC_CON9 */
 		.bitmask	= GENMASK(9, 9),
 		.shift		= 9,
 	}, {
-		.name		= TEST_CLEAR,
-		.reg		= 0x6264, 	/* SOC_CON25 */
+		.name		= GRF_DPHY_RX0_CLK_INV_SEL,
+		.reg		= 0x6224, 	/* GRF_SOC_CON9 */
 		.bitmask	= GENMASK(10, 10),
 		.shift		= 10,
 	}, {
-		.name		= TEST_DOUT,
-		.reg		= 0xe2a4, 	/* SOC_STATUS1 */
+		.name		= GRF_DPHY_RX1_CLK_INV_SEL,
+		.reg		= 0x6224, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(11, 11),
+		.shift		= 11,
+	}, {
+		.name		= GRF_DPHY_RX0_ENABLE,
+		.reg		= 0x6254, 	/* GRF_SOC_CON21 */
+		.bitmask	= GENMASK(0, 3),
+		.shift		= 0,
+	}, {
+		.name		= GRF_DPHY_RX0_FORCERXMODE,
+		.reg		= 0x6254, 	/* GRF_SOC_CON21 */
+		.bitmask	= GENMASK(4, 7),
+		.shift		= 4,
+	}, {
+		.name		= GRF_DPHY_RX0_FORCETXSTOPMODE,
+		.reg		= 0x6254, 	/* GRF_SOC_CON21 */
+		.bitmask	= GENMASK(8, 11),
+		.shift		= 8,
+	}, {
+		.name		= GRF_DPHY_RX0_TURNDISABLE,
+		.reg		= 0x6254, 	/* GRF_SOC_CON21 */
+		.bitmask	= GENMASK(12, 15),
+		.shift		= 12,
+	},{
+		.name		= GRF_DPHY_TX0_FORCERXMODE,
+		.reg		= 0x6258, 	/* GRF_SOC_CON22 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_DPHY_TX0_FORCETXSTOPMODE,
+		.reg		= 0x6258, 	/* GRF_SOC_CON22 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 4,
+	},{
+		.name		= GRF_DPHY_TX0_TURNDISABLE,
+		.reg		= 0x6258, 	/* GRF_SOC_CON22 */
+		.bitmask	= GENMASK(11, 8),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_TX0_TURNREQUEST,
+		.reg		= 0x6258, 	/* GRF_SOC_CON22 */
+		.bitmask	= GENMASK(15, 12),
+		.shift		= 12,
+	},{
+		.name		= GRF_DPHY_TX1RX1_ENABLE,
+		.reg		= 0x625C, 	/* GRF_SOC_CON23 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_DPHY_TX1RX1_FORCERXMODE,
+		.reg		= 0x625C, 	/* GRF_SOC_CON23 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 4,
+	},{
+		.name		= GRF_DPHY_TX1RX1_FORCETXSTOPMODE,
+		.reg		= 0x625C, 	/* GRF_SOC_CON23 */
+		.bitmask	= GENMASK(11,8),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_TX1RX1_TURNDISABLE,
+		.reg		= 0x625C, 	/* GRF_SOC_CON23 */
+		.bitmask	= GENMASK(15, 12),
+		.shift		= 12,
+	},{
+		.name		= GRF_DPHY_TX1RX1_TURNREQUEST,
+		.reg		= 0x6260, 	/* GRF_SOC_CON24 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_DPHY_RX1_SRC_SEL,
+		.reg		= 0x6260, 	/* GRF_SOC_CON24 */
+		.bitmask	= GENMASK(4, 4),
+		.shift		= 4,
+	},{
+		.name		= GRF_DPHY_TX1RX1_BASEDIR,
+		.reg		= 0x6260, 	/* GRF_SOC_CON24 */
+		.bitmask	= GENMASK(5, 5),
+		.shift		= 5,
+	},{
+		.name		= GRF_DPHY_TX1RX1_ENABLECLK,
+		.reg		= 0x6260, 	/* GRF_SOC_CON24 */
+		.bitmask	= GENMASK(6, 6),
+		.shift		= 6,
+	},{
+		.name		= GRF_DPHY_TX1RX1_MASTERSLAVEZ,
+		.reg		= 0x6260, 	/* GRF_SOC_CON24 */
+		.bitmask	= GENMASK(7, 7),
+		.shift		= 7,
+	},{
+		.name		= GRF_DPHY_RX0_TESTDIN,
+		.reg		= 0x6264, 	/* GRF_SOC_CON25 */
+		.bitmask	= GENMASK(7, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_DPHY_RX0_TESTEN,
+		.reg		= 0x6264, 	/* GRF_SOC_CON25 */
+		.bitmask	= GENMASK(8, 8),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_RX0_TESTCLK,
+		.reg		= 0x6264, 	/* GRF_SOC_CON25 */
+		.bitmask	= GENMASK(9, 9),
+		.shift		= 9,
+	},{
+		.name		= GRF_DPHY_RX0_TESTCLR,
+		.reg		= 0x6264, 	/* GRF_SOC_CON25 */
+		.bitmask	= GENMASK(10, 10),
+		.shift		= 7,
+	},{
+		.name		= GRF_DPHY_RX0_TESTDOUT,
+		.reg		= 0xe2a4, 	/* GRF_SOC_STATUS1 */
 		.bitmask	= GENMASK(7, 0),
 		.shift		= 0,
 	},
+};
+
+struct phy_reg rk3288_mipy_phy_regs[] = {
+	{
+		.name		= GRF_CON_DISABLE_ISP,
+		.reg		= 0x025C, 	/* GRF_SOC_CON6 */
+		.bitmask	= GENMASK(0, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_CON_ISP_DPHY_SEL,
+		.reg		= 0x025C, 	/* GRF_SOC_CON6 */
+		.bitmask	= GENMASK(1, 1),
+		.shift		= 1,
+	},{
+		.name		= GRF_DSI_CSI_TESTBUS_SEL,
+		.reg		= 0x025C, 	/* GRF_SOC_CON6 */
+		.bitmask	= GENMASK(14, 14),
+		.shift		= 14,
+	},{
+		.name		= GRF_DPHY_TX0_TURNDISABLE,
+		.reg		= 0x0264, 	/* GRF_SOC_CON8 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_TX0_FORCERXMODE,
+		.reg		= 0x0264, 	/* GRF_SOC_CON8 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_TX0_FORCETXSTOPMODE,
+		.reg		= 0x0264, 	/* GRF_SOC_CON8 */
+		.bitmask	= GENMASK(11, 8),
+		.shift		= 8,
+	},{
+		.name		= GRF_DPHY_TX1RX1_TURNDISABLE,
+		.reg		= 0x0268, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	}, {
+		.name		= GRF_DPHY_TX1RX1_FORCERXMODE,
+		.reg		= 0x0268, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 4,
+	}, {
+		.name		= GRF_DPHY_TX1RX1_FORCETXSTOPMODE,
+		.reg		= 0x0268, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(11, 8),
+		.shift		= 8,
+	}, {
+		.name		= GRF_DPHY_TX1RX1_ENABLE,
+		.reg		= 0x0268, 	/* GRF_SOC_CON9 */
+		.bitmask	= GENMASK(15, 12),
+		.shift		= 12,
+	}, {
+		.name		= GRF_DPHY_RX0_TURNDISABLE,
+		.reg		= 0x026C, 	/* GRF_SOC_CON10 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	}, {
+		.name		= GRF_DPHY_RX0_FORCERXMODE,
+		.reg		= 0x026C, 	/* GRF_SOC_CON10 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 4,
+	}, {
+		.name		= GRF_DPHY_RX0_FORCETXSTOPMODE,
+		.reg		= 0x026C, 	/* GRF_SOC_CON10 */
+		.bitmask	= GENMASK(11, 8),
+		.shift		= 8,
+	}, {
+		.name		= GRF_DPHY_RX0_ENABLE,
+		.reg		= 0x026C, 	/* GRF_SOC_CON10 */
+		.bitmask	= GENMASK(15, 12),
+		.shift		= 12,
+	}, {
+		.name		= GRF_DPHY_RX0_TESTCLR,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(0, 0),
+		.shift		= 0,
+	}, {
+		.name		= GRF_DPHY_RX0_TESTCLK,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(1, 1),
+		.shift		= 1,
+	},{
+		.name		= GRF_DPHY_RX0_TESTEN,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(2, 2),
+		.shift		= 2,
+	},{
+		.name		= GRF_DPHY_RX0_TESTDIN,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(10, 3),
+		.shift		= 3,
+	},{
+		.name		= GRF_DPHY_TX1RX1_ENABLECLK,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(12, 12),
+		.shift		= 12,
+	},{
+		.name		= GRF_DPHY_RX1_SRC_SEL,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(13, 13),
+		.shift		= 13,
+	},{
+		.name		= GRF_DPHY_TX1RX1_MASTERSLAVEZ,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(14, 14),
+		.shift		= 14,
+	},{
+		.name		= GRF_DPHY_TX1RX1_BASEDIR,
+		.reg		= 0x027C, 	/* GRF_SOC_CON14 */
+		.bitmask	= GENMASK(15, 15),
+		.shift		= 15,
+	},{
+		.name		= GRF_DPHY_RX0_TURNREQUEST,
+		.reg		= 0x03A4, 	/* GRF_SOC_CON15 */
+		.bitmask	= GENMASK(3, 0),
+		.shift		= 0,
+	},{
+		.name		= GRF_DPHY_TX1RX1_TURNREQUEST,
+		.reg		= 0x03A4, 	/* GRF_SOC_CON15 */
+		.bitmask	= GENMASK(7, 4),
+		.shift		= 4,
+	},{
+		.name		= GRF_DPHY_TX0_TURNREQUEST,
+		.reg		= 0x03A4, 	/* GRF_SOC_CON15 */
+		.bitmask	= GENMASK(10, 8),
+		.shift		= 8,
+	},{
+		.name		= GRF_DVP_V18SEL,
+		.reg		= 0x0380, 	/* GRF_IO_VSEL */
+		.bitmask	= GENMASK(1, 1),
+		.shift		= 1,
+	},{
+		.name		= GRF_DPHY_RX0_TESTDOUT,
+		.reg		= 0x02D4, 	/* GRF_SOC_STATUS21 */
+		.bitmask	= GENMASK(7, 0),
+		.shift		= 0,
+	},
+};
+
+struct grf_mipi_dphy{
+	struct phy_reg *regs;
+	u32 size;
+};
+
+static const struct grf_mipi_dphy rk3288_grf_mipi_dphy = {
+	.regs = &rk3288_mipy_phy_regs,
+	.size = sizeof(rk3288_mipy_phy_regs),
+};
+
+static const struct grf_mipi_dphy rk3399_grf_mipi_dphy = {
+	.regs = &rk3399_mipy_phy_regs,
+	.size = sizeof(rk3399_mipy_phy_regs),
 };
 
 struct mipiphy_hsfreqrange {
@@ -133,18 +394,19 @@ static struct mipiphy_hsfreqrange mipi_phy_hsfreq_range[] = {
 };
 
 #define MIPIPHY_STATE_OFF 0
-#define MIPIPHY_STATE_POWERD 1
+#define MIPIPHY_STATE_POWERED 1
 #define MIPIPHY_STATE_STREAMING 2
 
 struct mipiphy_priv {
 	struct device		*dev;
 	struct regmap		*regmap_grf;
-	struct phy_reg		*regs;
+	struct grf_mipi_dphy		*grf_regs;
 	struct clk		*clk_phy_ref;
 	struct clk		*clk_phy_cfg;
+	struct clk		*clk_mipi_csi;
 	u32			lanes;
 	u32			bit_rate;
-
+	struct of_device_id *of_id;
 	int			state;
 	struct v4l2_subdev	sd;
 	struct media_pad	pads[MIPIPHY_PADS_NUM];
@@ -156,10 +418,21 @@ static inline void write_reg(struct regmap *base, struct phy_reg *preg, u8 val)
 	regmap_write(base, preg->reg, val << preg->shift | preg->bitmask << 16);
 }
 
+struct phy_reg *find_reg(struct grf_mipi_dphy *grf_regs, u32 name)
+{
+	u32 i = 0;
+	while( i<grf_regs->size ){
+		if(grf_regs->regs[i].name==name)
+			return &grf_regs->regs[i];
+		i++;
+	};
+	return 0;
+}
+
 static void mipiphy_wr_reg(struct mipiphy_priv *priv,
 			  u8 test_code, u8 test_data)
 {
-	struct phy_reg *regs = priv->regs;
+	struct grf_mipi_dphy *grf_regs = priv->grf_regs;
 	struct regmap *grf = priv->regmap_grf;
 
 	/*
@@ -167,28 +440,28 @@ static void mipiphy_wr_reg(struct mipiphy_priv *priv,
 	 * is latched internally as the current test code. Test data is
 	 * programmed internally by rising edge on TESTCLK.
 	 */
-	write_reg(grf, &regs[TEST_CLOCK], 1);
-	write_reg(grf, &regs[TEST_DIN], test_code);
-	write_reg(grf, &regs[TEST_ENABLE], 1);
-	write_reg(grf, &regs[TEST_CLOCK], 0);
-	write_reg(grf, &regs[TEST_ENABLE], 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLK), 1);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTDIN), test_code);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTEN), 1);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLK), 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTEN), 0);
 
-	write_reg(grf, &regs[TEST_DIN], test_data);
-	write_reg(grf, &regs[TEST_CLOCK], 1);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTDIN), test_data);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLK), 1);
 }
 
 static int mipiphy_s_stream(struct v4l2_subdev *sd, int on)
 {
 	struct mipiphy_priv *priv = to_mipiphy(sd);
 	struct regmap *grf = priv->regmap_grf;
-	struct phy_reg *regs = priv->regs;
+	struct grf_mipi_dphy *grf_regs = priv->grf_regs;
 	int hsfreqrange, i;
 	int lanes = priv->lanes;
 	int bit_rate = priv->bit_rate;
 
 	if (!on) {
 		if (priv->state == MIPIPHY_STATE_STREAMING) {
-			priv->state = MIPIPHY_STATE_POWERD; //TODO(zsq): to stop streaming
+			priv->state = MIPIPHY_STATE_POWERED; //TODO(zsq): to stop streaming
 		}
 
 		return 0;
@@ -205,19 +478,19 @@ static int mipiphy_s_stream(struct v4l2_subdev *sd, int on)
 		}
 	}
 
-	write_reg(grf, &regs[FORCE_RX_MODE], 0);
-	write_reg(grf, &regs[FORCE_TX_STOP_MODE], 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_FORCERXMODE), 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_FORCETXSTOPMODE), 0);
 	/* Disable lan turn around, which is ignored in receive mode */
-	write_reg(grf, &regs[TURN_AROUND_REQUEST], 0);
-	write_reg(grf, &regs[TURN_AROUND_DISABLE], 0xf);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TURNREQUEST), 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TURNDISABLE), 0xf);
 
-	write_reg(grf, &regs[LANES_ENALBE], GENMASK(lanes - 1, 0));
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_ENABLE), GENMASK(lanes - 1, 0));
 
 	/* phy start */
-	write_reg(grf, &regs[TEST_CLOCK], 1);
-	write_reg(grf, &regs[TEST_CLEAR], 1);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLK), 1);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLR), 1);
 	usleep_range(100, 150);
-	write_reg(grf, &regs[TEST_CLEAR], 0);
+	write_reg(grf, find_reg(grf_regs, GRF_DPHY_RX0_TESTCLR), 0);
 	usleep_range(100, 150);
 
 	/* set clock lane */
@@ -249,26 +522,37 @@ static int mipiphy_s_power(struct v4l2_subdev *sd, int on)
 	if (on) {
 		if (priv->state > MIPIPHY_STATE_OFF)
 			return 0;
-
-		ret = clk_prepare_enable(priv->clk_phy_cfg);
-		if (ret) {
-			v4l2_err(&priv->sd, "Fail to enable phy_cfg clock\n");
-			return ret;
+		if(!strcmp(priv->of_id->compatible, "rockchip,rk3288-isp-mipi-phy")){
+			ret = clk_prepare_enable(priv->clk_mipi_csi);
+			if (ret) {
+				v4l2_err(&priv->sd, "Fail to enable mipi_csi clock\n");
+				return ret;
+			}
+		}else{
+			ret = clk_prepare_enable(priv->clk_phy_cfg);
+			if (ret) {
+				v4l2_err(&priv->sd, "Fail to enable phy_cfg clock\n");
+				return ret;
+			}
+			ret = clk_prepare_enable(priv->clk_phy_ref);
+			if (ret) {
+				v4l2_err(&priv->sd, "Fail to enable phy_ref clock\n");
+				clk_disable_unprepare(priv->clk_phy_ref);
+				return ret;
+			}
 		}
-		ret = clk_prepare_enable(priv->clk_phy_ref);
-		if (ret) {
-			v4l2_err(&priv->sd, "Fail to enable phy_ref clock\n");
-			clk_disable_unprepare(priv->clk_phy_cfg);
-			return ret;
-		}
 
-		priv->state = MIPIPHY_STATE_POWERD;
+		priv->state = MIPIPHY_STATE_POWERED;
 	} else {
 		if (priv->state == MIPIPHY_STATE_OFF)
 			return 0;
+		if(!strcmp(priv->of_id->compatible, "rockchip,rk3288-isp-mipi-phy")){
+			clk_disable_unprepare(priv->clk_mipi_csi);
+		}else{
+			clk_disable_unprepare(priv->clk_phy_ref);
+			clk_disable_unprepare(priv->clk_phy_cfg);
+		}
 
-		clk_disable_unprepare(priv->clk_phy_ref);
-		clk_disable_unprepare(priv->clk_phy_cfg);
 		priv->state = MIPIPHY_STATE_OFF;
 	}
 	printk("ZSQ : %s/%d\n", __func__, __LINE__);
@@ -292,9 +576,12 @@ static struct v4l2_subdev_ops mipiphy_subdev_ops = {
 static const struct of_device_id rockchip_mipiphy_match_id[] = {
 	{
 		.compatible = "rockchip,rk3399-isp-mipi-phy",
-		.data = &rk3399_rx0_regs,
+		.data = &rk3399_grf_mipi_dphy,
+	}, 	{
+		.compatible = "rockchip,rk3288-isp-mipi-phy",
+		.data = &rk3288_grf_mipi_dphy,
 	},
-	{ }
+	{ /* sentinel */ },
 };
 MODULE_DEVICE_TABLE(of, rockchip_mipiphy_match_id);
 
@@ -306,7 +593,7 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 	struct regmap *grf;
 	const struct of_device_id *of_id;
 	int ret;
-
+	printk("rockchip_mipiphy_probe!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv) {
 		return -ENOMEM;
@@ -314,6 +601,10 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 	priv->dev = dev;
 	priv->state = MIPIPHY_STATE_OFF;
 
+	of_id = of_match_device(rockchip_mipiphy_match_id, dev);
+	if (!of_id)
+		return -EINVAL;
+	priv->of_id = of_id;
 	grf = syscon_regmap_lookup_by_phandle(dev->of_node, "rockchip,grf");
 	if (IS_ERR(grf)) {
 		dev_err(dev, "Can't find GRF syscon\n");
@@ -321,21 +612,27 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 	}
 	priv->regmap_grf = grf;
 
-	priv->clk_phy_ref = devm_clk_get(dev, "phy-ref");
-	if (IS_ERR(priv->clk_phy_ref)) {
-		dev_err(dev, "Unable to get phy-ref clock\n");
-		return -EINVAL;
-	}
-	priv->clk_phy_cfg = devm_clk_get(dev, "phy-cfg");
-	if (IS_ERR(priv->clk_phy_cfg)) {
-		dev_err(dev, "Unable to phy-cfg clock\n");
-		return -EINVAL;
+	if(!strcmp(of_id->compatible, "rockchip,rk3288-isp-mipi-phy")){
+		priv->clk_mipi_csi = devm_clk_get(dev, "mipi_csi");
+		if (IS_ERR(priv->clk_mipi_csi)) {
+			dev_err(dev, "Unable to get mipi_csi clock\n");
+			return -EINVAL;
+		}
+	}else{
+		priv->clk_phy_ref = devm_clk_get(dev, "phy-ref");
+		if (IS_ERR(priv->clk_phy_ref)) {
+			dev_err(dev, "Unable to get phy-ref clock\n");
+			return -EINVAL;
+		}
+
+		priv->clk_phy_cfg = devm_clk_get(dev, "phy-cfg");
+		if (IS_ERR(priv->clk_phy_cfg)) {
+			dev_err(dev, "Unable to get phy-cfg clock\n");
+			return -EINVAL;
+		}
 	}
 
-	of_id = of_match_device(rockchip_mipiphy_match_id, dev);
-	if (!of_id)
-		return -EINVAL;
-	priv->regs = (struct phy_reg *)of_id->data;
+	priv->grf_regs = (struct grf_mipi_dphy *)of_id->data;
 
 	sd = &priv->sd;
 	v4l2_subdev_init(sd, &mipiphy_subdev_ops);
@@ -344,6 +641,7 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 
 	priv->pads[MIPIPHY_PAD_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
 	priv->pads[MIPIPHY_PAD_SINK].flags = MEDIA_PAD_FL_SINK;
+	sd->entity.function = MEDIA_ENT_F_IO_V4L;
 	//ret = media_entity_init(&sd->entity, MIPIPHY_PADS_NUM, priv->pads, 0);
 	ret = media_entity_pads_init(&sd->entity, MIPIPHY_PADS_NUM, priv->pads);
 	if (ret)
@@ -351,7 +649,7 @@ static int rockchip_mipiphy_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, &sd->entity);
 
-	dev_info(dev, "RK3399 mipiphy probed\n");
+	dev_info(dev, "mipiphy probed\n");
 
 	return 0;
 }

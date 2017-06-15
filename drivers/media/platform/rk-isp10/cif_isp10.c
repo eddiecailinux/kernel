@@ -5202,6 +5202,7 @@ int register_cifisp_isp_subdev(struct cif_isp10_device *isp_dev,
 	v4l2_subdev_init(sd, &cifisp_isp_subdev_ops);
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	snprintf(sd->name, sizeof(sd->name), "cif-isp10-subdev-isp");
+printk("register_cifisp_isp_subdev1\n");
 
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SINK_MIPI].flags = MEDIA_PAD_FL_SINK;
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SINK_DVP].flags = MEDIA_PAD_FL_SINK;
@@ -5209,27 +5210,28 @@ int register_cifisp_isp_subdev(struct cif_isp10_device *isp_dev,
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_MP].flags = MEDIA_PAD_FL_SOURCE;
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_SP].flags = MEDIA_PAD_FL_SOURCE;
 	isp_dev->pads[CIF_ISP10_ISP_PAD_SOURCE_STATS].flags = MEDIA_PAD_FL_SOURCE;
+	sd->entity.function = MEDIA_ENT_F_PROC_VIDEO_PIXEL_FORMATTER;
 	//ret = media_entity_init(&sd->entity, CIF_ISP10_ISP_PAD_MAX,
 	//						isp_dev->pads, 0);
 	ret = media_entity_pads_init(&sd->entity, CIF_ISP10_ISP_PAD_MAX, isp_dev->pads);
 	if (ret)
 		return ret;
-
+printk("register_cifisp_isp_subdev2\n");
 	//TODO: setup ctrls, eg. 3A controls
 	v4l2_ctrl_handler_init(handler, 1);
-
+printk("register_cifisp_isp_subdev3\n");
 	if (handler->error) {
 		media_entity_cleanup(&sd->entity);
 		return handler->error;
 	}
-
+printk("register_cifisp_isp_subdev4\n");
 	sd->ctrl_handler = handler;
 	//have internal ops ?
 	//sd->internal_ops = &fimc_lite_subdev_internal_ops;
 	sd->entity.ops = &cifisp_isp_subdev_media_ops;
 	sd->owner = THIS_MODULE;
 	v4l2_set_subdevdata(sd, isp_dev);
-
+printk("register_cifisp_isp_subdev5\n");
 	//group id?
 	sd->grp_id = GRP_ID_ISP;
 	//create pipeline ?
@@ -5243,6 +5245,7 @@ int register_cifisp_isp_subdev(struct cif_isp10_device *isp_dev,
 		v4l2_set_subdevdata(sd, NULL);
 		v4l2_err(v4l2_dev, "Failed to register isp subdev\n");
 	}
+	printk("register_cifisp_isp_subdev6\n");
 	return ret;
  }
 
